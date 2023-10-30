@@ -99,8 +99,11 @@ def collect(
                     break
 
         if value is not None:
-            result[field.name] = field.map_value(value)
+            try:
+                mapped_value = field.map_value(value)
+            except Exception:
+                pass
+            else:
+                result[field.name] = mapped_value
 
-    if not result:
-        return None
     return result

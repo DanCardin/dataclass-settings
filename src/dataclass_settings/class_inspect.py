@@ -58,7 +58,7 @@ class Field:
     name: str
     type: type
     annotations: tuple[Any, ...]
-    mapper: Callable[..., Any] | None = None
+    mapper: Callable[..., Any]
 
     @classmethod
     def from_dataclass(cls, typ: Type) -> list[Self]:
@@ -81,6 +81,7 @@ class Field:
                 name=name,
                 type=f.annotation,
                 annotations=tuple(f.metadata),
+                mapper=get_type(f.annotation),
             )
             fields.append(field)
         return fields
@@ -93,6 +94,7 @@ class Field:
                 name=name,
                 type=f.annotation,
                 annotations=tuple(f.metadata),
+                mapper=get_type(f.annotation),
             )
             fields.append(field)
         return fields
@@ -137,11 +139,9 @@ class Field:
         return supported_arg
 
     def map_value(self, value: str | dict[str, Any]):
-        if self.mapper:
-            if isinstance(value, str):
-                return self.mapper(value)
-            return self.mapper(**value)
-        return value
+        if isinstance(value, str):
+            return self.mapper(value)
+        return self.mapper(**value)
 
 
 def fields(cls: type):
@@ -159,3 +159,9 @@ def fields(cls: type):
         return Field.from_attrs(cls)
 
     raise NotImplementedError()  # pragma: no cover
+
+
+def get_type(typ):
+    if typing_inspect.is_optional_type(typ):
+        return get_args(typ)[0]
+    return typ
