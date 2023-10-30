@@ -101,7 +101,7 @@ def collect(
         if value is not None:
             try:
                 mapped_value = field.map_value(value)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             else:
                 result[field.name] = mapped_value
