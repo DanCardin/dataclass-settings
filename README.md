@@ -5,6 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/dataclass-settings/badge/?version=latest)](https://dataclass-settings.readthedocs.io/en/latest/?badge=latest)
 
 - [Full documentation here](https://dataclass-settings.readthedocs.io/en/latest/).
+- [Bundled Loaders](https://dataclass-settings.readthedocs.io/en/latest/loaders.html).
 
 `dataclass-settings` intends to work with any
 [PEP-681](https://peps.python.org/pep-0681/)-compliant dataclass-like object,
