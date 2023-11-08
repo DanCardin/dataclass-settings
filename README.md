@@ -85,7 +85,7 @@ example: Example = load_settings(Example, nested_delimiter='_')
   necessitating the use of a mypy plugin for it to not emit type errors into
   user code.
 
-  The code recommended in their documentation for namespacing settingj, looks
+  The code recommended in their documentation for namespacing settings, looks
   like:
 
   ```python
