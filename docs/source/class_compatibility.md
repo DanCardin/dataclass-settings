@@ -18,6 +18,11 @@ values from the annotated types on the fields.
 
 This also applies to pydantic's `dataclasses` module.
 
+```{note}
+At this time, it **seems** as though pydantic 1.x does not retain the original
+Annotated type information, which is required to support this API.
+```
+
 ## Attrs
 
 Attrs will likely work next-best, because it has an optional `converters`, which

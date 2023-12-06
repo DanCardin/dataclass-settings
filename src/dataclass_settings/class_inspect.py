@@ -41,7 +41,12 @@ class ClassTypes(Enum):
         except ImportError:  # pragma: no cover
             pass
         else:
-            if isinstance(obj, type) and issubclass(obj, BaseModel):
+            try:
+                is_base_model = issubclass(obj, BaseModel)
+            except TypeError:
+                is_base_model = False
+
+            if is_base_model:
                 return cls.pydantic
 
         if hasattr(obj, "__attrs_attrs__"):
