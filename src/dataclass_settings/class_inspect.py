@@ -63,7 +63,7 @@ class Field:
     name: str
     type: type
     annotations: tuple[Any, ...]
-    mapper: Callable[..., Any]
+    mapper: Callable[..., Any] | None = None
 
     @classmethod
     def from_dataclass(cls, typ: Type) -> list[Self]:
@@ -82,11 +82,14 @@ class Field:
     def from_pydantic(cls, typ: Type) -> list[Self]:
         fields = []
         for name, f in typ.model_fields.items():
+            annotation_type = get_type(f.annotation)
+            mapper = annotation_type if detect(annotation_type) else None
+
             field = cls(
                 name=name,
                 type=f.annotation,
                 annotations=tuple(f.metadata),
-                mapper=get_type(f.annotation),
+                mapper=mapper,
             )
             fields.append(field)
         return fields
@@ -95,11 +98,14 @@ class Field:
     def from_pydantic_dataclass(cls, typ: Type) -> list[Self]:
         fields = []
         for name, f in typ.__pydantic_fields__.items():
+            annotation_type = get_type(f.annotation)
+            mapper = annotation_type if detect(annotation_type) else None
+
             field = cls(
                 name=name,
                 type=f.annotation,
                 annotations=tuple(f.metadata),
-                mapper=get_type(f.annotation),
+                mapper=mapper,
             )
             fields.append(field)
         return fields
@@ -144,8 +150,12 @@ class Field:
         return supported_arg
 
     def map_value(self, value: str | dict[str, Any]):
+        if not self.mapper:
+            return value
+
         if isinstance(value, str):
             return self.mapper(value)
+
         return self.mapper(**value)
 
 

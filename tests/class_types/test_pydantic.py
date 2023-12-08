@@ -58,3 +58,18 @@ def test_map_decimal():
         config = load_settings(Config)
 
     assert config == Config(foo=Decimal("3"))
+
+
+def test_bool_mapping():
+    class Config(BaseModel):
+        foo: Annotated[bool, Env("FOO")]
+
+    with env_setup({"FOO": "True"}):
+        config = load_settings(Config)
+
+    assert config == Config(foo=True)
+
+    with env_setup({"FOO": "False"}):
+        config = load_settings(Config)
+
+    assert config == Config(foo=False)
