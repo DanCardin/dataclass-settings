@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 
 import pytest
@@ -8,12 +10,13 @@ from typing_extensions import Annotated
 from tests.utils import env_setup
 
 
-def test_missing_required():
-    class Config(BaseModel):
-        foo: Annotated[str, Env("FOO")]
+class MissingRequiredConfig(BaseModel):
+    foo: Annotated[str, Env("FOO")]
 
+
+def test_missing_required():
     with env_setup({}), pytest.raises(ValidationError):
-        load_settings(Config)
+        load_settings(MissingRequiredConfig)
 
 
 def test_has_required_required():
@@ -27,17 +30,19 @@ def test_has_required_required():
     assert config == Config(foo="1", ignoreme="asdf")
 
 
+class NestedSub(BaseModel):
+    foo: Annotated[str, Env("FOO")]
+
+
+class NestedConfig(BaseModel):
+    sub: NestedSub
+
+
 def test_nested():
-    class Sub(BaseModel):
-        foo: Annotated[str, Env("FOO")]
-
-    class Config(BaseModel):
-        sub: Sub
-
     with env_setup({"FOO": "3"}):
-        config = load_settings(Config)
+        config = load_settings(NestedConfig)
 
-    assert config == Config(sub=Sub(foo="3"))
+    assert config == NestedConfig(sub=NestedSub(foo="3"))
 
 
 def test_map_int():

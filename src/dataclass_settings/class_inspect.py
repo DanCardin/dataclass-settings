@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Callable, Type
 
 import typing_inspect
-from typing_extensions import Self, get_args, get_origin
+from typing_extensions import Annotated, Self, get_args, get_origin, get_type_hints
 
 from dataclass_settings.loaders import Loader
 
@@ -25,6 +25,7 @@ def detect(cls: type) -> bool:
 class ClassTypes(Enum):
     dataclass = "dataclass"
     pydantic = "pydantic"
+    pydantic_v1 = "pydantic_v1"
     pydantic_dataclass = "pydantic_dataclass"
     attrs = "attrs"
 
@@ -37,16 +38,20 @@ class ClassTypes(Enum):
             return cls.dataclass
 
         try:
-            from pydantic import BaseModel
+            import pydantic
         except ImportError:  # pragma: no cover
             pass
         else:
             try:
-                is_base_model = issubclass(obj, BaseModel)
+                is_base_model = isinstance(obj, type) and issubclass(
+                    obj, pydantic.BaseModel
+                )
             except TypeError:
                 is_base_model = False
 
             if is_base_model:
+                if pydantic.__version__.startswith("1."):
+                    return cls.pydantic_v1
                 return cls.pydantic
 
         if hasattr(obj, "__attrs_attrs__"):
@@ -69,11 +74,17 @@ class Field:
     def from_dataclass(cls, typ: Type) -> list[Self]:
         fields = []
         for f in typ.__dataclass_fields__.values():
+            type_ = get_origin(f.type) or f.type
+            args = get_args(f.type) or ()
+            if type_ is Annotated:
+                type_, *_args = args
+                args = tuple(_args)
+
             field = cls(
                 name=f.name,
-                type=get_origin(f.type) or f.type,
-                annotations=get_args(f.type) or (),
-                mapper=f.type,
+                type=type_,
+                annotations=args,
+                mapper=type_,
             )
             fields.append(field)
         return fields
@@ -89,6 +100,23 @@ class Field:
                 name=name,
                 type=f.annotation,
                 annotations=tuple(f.metadata),
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+    @classmethod
+    def from_pydantic_v1(cls, typ: Type) -> list[Self]:
+        fields = []
+        type_hints = get_type_hints(typ, include_extras=True)
+        for name, f in typ.__fields__.items():
+            annotation = get_type(type_hints[name])
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=f.annotation,
+                annotations=get_args(annotation) or (),
                 mapper=mapper,
             )
             fields.append(field)
@@ -166,6 +194,9 @@ def fields(cls: type):
 
     if class_type == ClassTypes.pydantic:
         return Field.from_pydantic(cls)
+
+    if class_type == ClassTypes.pydantic_v1:
+        return Field.from_pydantic_v1(cls)
 
     if class_type == ClassTypes.pydantic_dataclass:
         return Field.from_pydantic_dataclass(cls)
