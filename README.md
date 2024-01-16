@@ -11,7 +11,7 @@
 [PEP-681](https://peps.python.org/pep-0681/)-compliant dataclass-like object,
 including but not limited to:
 
-- [Pydantic models](https://pydantic-docs.helpmanual.io/) (v2+),
+- [Pydantic models](https://pydantic-docs.helpmanual.io/) (v1/v2),
 - [dataclasses](https://docs.python.org/3/library/dataclasses.html)
 - [attrs classes](https://www.attrs.org/en/stable/).
 

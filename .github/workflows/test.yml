@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        pydantic-version: ["1.0", "2.0"]
 
     steps:
       - uses: actions/checkout@v3
@@ -43,7 +44,9 @@ jobs:
             ${{ runner.os }}-poetry-
 
       - name: Install dependencies
-        run: make install
+        run: |
+          make install
+          pip install 'pydantic~=${{ matrix.pydantic-version }}'
 
       - name: Run Linters
         run: poetry run make lint

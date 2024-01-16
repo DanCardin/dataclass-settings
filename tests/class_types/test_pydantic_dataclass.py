@@ -9,13 +9,14 @@ from typing_extensions import Annotated
 from tests.utils import env_setup
 
 
-def test_missing_required():
-    @dataclass
-    class Config:
-        foo: Annotated[str, Env("FOO")]
+@dataclass
+class MissingRequiredConfig:
+    foo: Annotated[str, Env("FOO")]
 
-    with env_setup({}), pytest.raises(ValidationError):
-        load_settings(Config)
+
+def test_missing_required():
+    with env_setup({}), pytest.raises((ValidationError, TypeError)):
+        load_settings(MissingRequiredConfig)
 
 
 def test_has_required_required():
