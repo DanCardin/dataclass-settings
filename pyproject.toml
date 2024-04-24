@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dataclass-settings"
-version = "0.2.3"
+version = "0.3.0"
 description = "Declarative dataclass settings."
 
 repository = "https://github.com/dancardin/dataclass-settings"
