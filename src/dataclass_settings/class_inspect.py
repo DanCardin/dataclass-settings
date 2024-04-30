@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
-from typing import Any, Callable, Type
+from typing import Any, Callable, Tuple, Type
 
 import typing_inspect
 from typing_extensions import Annotated, Self, get_args, get_origin, get_type_hints
@@ -71,67 +71,32 @@ class Field:
     mapper: Callable[..., Any] | None = None
 
     @classmethod
-    def from_dataclass(cls, typ: Type) -> list[Self]:
+    def from_dataclass(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
         for f in typ.__dataclass_fields__.values():
-            type_ = get_origin(f.type) or f.type
-            args = get_args(f.type) or ()
-            if type_ is Annotated:
-                type_, *_args = args
-                args = tuple(_args)
+            annotation = get_type(type_hints[f.name])
+
+            annotation, args = get_annotation_args(annotation)
 
             field = cls(
                 name=f.name,
-                type=type_,
+                type=annotation,
                 annotations=args,
-                mapper=type_,
+                mapper=annotation,
             )
             fields.append(field)
         return fields
 
     @classmethod
-    def from_pydantic(cls, typ: Type) -> list[Self]:
+    def from_pydantic(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
         for name, f in typ.model_fields.items():
-            annotation_type = get_type(f.annotation)
-            mapper = annotation_type if detect(annotation_type) else None
-
-            field = cls(
-                name=name,
-                type=f.annotation,
-                annotations=tuple(f.metadata),
-                mapper=mapper,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_pydantic_v1(cls, typ: Type) -> list[Self]:
-        fields = []
-        type_hints = get_type_hints(typ, include_extras=True)
-        for name, f in typ.__fields__.items():
             annotation = get_type(type_hints[name])
             mapper = annotation if detect(annotation) else None
 
             field = cls(
                 name=name,
-                type=f.annotation,
-                annotations=get_args(annotation) or (),
-                mapper=mapper,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_pydantic_dataclass(cls, typ: Type) -> list[Self]:
-        fields = []
-        for name, f in typ.__pydantic_fields__.items():
-            annotation_type = get_type(f.annotation)
-            mapper = annotation_type if detect(annotation_type) else None
-
-            field = cls(
-                name=name,
-                type=f.annotation,
+                type=annotation,
                 annotations=tuple(f.metadata),
                 mapper=mapper,
             )
@@ -139,14 +104,55 @@ class Field:
         return fields
 
     @classmethod
-    def from_attrs(cls, typ: Type) -> list[Self]:
+    def from_pydantic_v1(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
+        for name, f in typ.__fields__.items():
+            annotation = get_type(type_hints[name])
+            annotation, args = get_annotation_args(annotation)
+
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=annotation,
+                annotations=args,
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+    @classmethod
+    def from_pydantic_dataclass(
+        cls, typ: Type, type_hints: dict[str, Type]
+    ) -> list[Self]:
+        fields = []
+
+        for name, f in typ.__pydantic_fields__.items():
+            annotation = get_type(type_hints[name])
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=annotation,
+                annotations=tuple(f.metadata),
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+    @classmethod
+    def from_attrs(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+
         for f in typ.__attrs_attrs__:
+            annotation = get_type(type_hints[f.name])
+            annotation, args = get_annotation_args(annotation)
+
             field = cls(
                 name=f.name,
-                type=get_origin(f.type) or f.type,
-                annotations=get_args(f.type) or (),
-                mapper=f.type,
+                type=annotation,
+                annotations=args,
+                mapper=annotation,
             )
             fields.append(field)
         return fields
@@ -189,20 +195,22 @@ class Field:
 
 def fields(cls: type):
     class_type = ClassTypes.from_cls(cls)
+
+    type_hints = get_type_hints(cls, include_extras=True)
     if class_type == ClassTypes.dataclass:
-        return Field.from_dataclass(cls)
+        return Field.from_dataclass(cls, type_hints)
 
     if class_type == ClassTypes.pydantic:
-        return Field.from_pydantic(cls)
+        return Field.from_pydantic(cls, type_hints)
 
     if class_type == ClassTypes.pydantic_v1:
-        return Field.from_pydantic_v1(cls)
+        return Field.from_pydantic_v1(cls, type_hints)
 
     if class_type == ClassTypes.pydantic_dataclass:
-        return Field.from_pydantic_dataclass(cls)
+        return Field.from_pydantic_dataclass(cls, type_hints)
 
     if class_type == ClassTypes.attrs:
-        return Field.from_attrs(cls)
+        return Field.from_attrs(cls, type_hints)
 
     raise NotImplementedError()  # pragma: no cover
 
@@ -211,3 +219,13 @@ def get_type(typ):
     if typing_inspect.is_optional_type(typ):
         return get_args(typ)[0]
     return typ
+
+
+def get_annotation_args(annotation) -> Tuple[Type, Tuple[Any, ...]]:
+    args: Tuple[Any, ...] = ()
+    if get_origin(annotation) is Annotated:
+        args = get_args(annotation)
+        annotation, *_args = args
+        args = tuple(_args)
+
+    return annotation, args
