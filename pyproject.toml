@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dataclass-settings"
-version = "0.3.1"
+version = "0.4.0"
 description = "Declarative dataclass settings."
 
 repository = "https://github.com/dancardin/dataclass-settings"
@@ -11,6 +11,8 @@ keywords = [
   "dataclass",
   "attrs",
   "pydantic",
+  "msgspec",
+  "env",
   "settings",
 ]
 classifiers = [
@@ -35,6 +37,7 @@ black = "^23.7.0"
 coverage = "^7.3.0"
 mypy = ">=1.0"
 pydantic = "*"
+msgspec = "*"
 pytest = "^7.4.0"
 ruff = "^0.0.286"
 
@@ -88,7 +91,6 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 incremental = true
 check_untyped_defs = true
-enable_incomplete_feature = ["Unpack"]
 
 [tool.pytest.ini_options]
 doctest_optionflags = "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ELLIPSIS"
