@@ -16,51 +16,7 @@ __all__ = [
 
 
 def detect(cls: type) -> bool:
-    try:
-        return bool(ClassTypes.from_cls(cls))
-    except ValueError:
-        return False
-
-
-class ClassTypes(Enum):
-    dataclass = "dataclass"
-    pydantic = "pydantic"
-    pydantic_v1 = "pydantic_v1"
-    pydantic_dataclass = "pydantic_dataclass"
-    attrs = "attrs"
-
-    @classmethod
-    def from_cls(cls, obj: type) -> ClassTypes:
-        if hasattr(obj, "__pydantic_fields__"):
-            return cls.pydantic_dataclass
-
-        if dataclasses.is_dataclass(obj):
-            return cls.dataclass
-
-        try:
-            import pydantic
-        except ImportError:  # pragma: no cover
-            pass
-        else:
-            try:
-                is_base_model = isinstance(obj, type) and issubclass(
-                    obj, pydantic.BaseModel
-                )
-            except TypeError:
-                is_base_model = False
-
-            if is_base_model:
-                if pydantic.__version__.startswith("1."):
-                    return cls.pydantic_v1
-                return cls.pydantic
-
-        if hasattr(obj, "__attrs_attrs__"):
-            return cls.attrs
-
-        raise ValueError(  # pragma: no cover
-            f"'{cls}' is not a currently supported base class. "
-            "Must be one of: dataclass, pydantic, or attrs class."
-        )
+    return bool(ClassTypes.from_cls(cls))
 
 
 @dataclasses.dataclass
@@ -69,93 +25,6 @@ class Field:
     type: type
     annotations: tuple[Any, ...]
     mapper: Callable[..., Any] | None = None
-
-    @classmethod
-    def from_dataclass(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
-        fields = []
-        for f in typ.__dataclass_fields__.values():
-            annotation = get_type(type_hints[f.name])
-
-            annotation, args = get_annotation_args(annotation)
-
-            field = cls(
-                name=f.name,
-                type=annotation,
-                annotations=args,
-                mapper=annotation,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_pydantic(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
-        fields = []
-        for name, f in typ.model_fields.items():
-            annotation = get_type(type_hints[name])
-            mapper = annotation if detect(annotation) else None
-
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=tuple(f.metadata),
-                mapper=mapper,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_pydantic_v1(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
-        fields = []
-        for name, f in typ.__fields__.items():
-            annotation = get_type(type_hints[name])
-            annotation, args = get_annotation_args(annotation)
-
-            mapper = annotation if detect(annotation) else None
-
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=args,
-                mapper=mapper,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_pydantic_dataclass(
-        cls, typ: Type, type_hints: dict[str, Type]
-    ) -> list[Self]:
-        fields = []
-
-        for name, f in typ.__pydantic_fields__.items():
-            annotation = get_type(type_hints[name])
-            mapper = annotation if detect(annotation) else None
-
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=tuple(f.metadata),
-                mapper=mapper,
-            )
-            fields.append(field)
-        return fields
-
-    @classmethod
-    def from_attrs(cls, typ: Type, type_hints: dict[str, Type]) -> list[Self]:
-        fields = []
-
-        for f in typ.__attrs_attrs__:
-            annotation = get_type(type_hints[f.name])
-            annotation, args = get_annotation_args(annotation)
-
-            field = cls(
-                name=f.name,
-                type=annotation,
-                annotations=args,
-                mapper=annotation,
-            )
-            fields.append(field)
-        return fields
 
     def get_loaders(self, loaders: tuple[Type[Loader], ...]):
         for m in self.annotations:
@@ -193,26 +62,184 @@ class Field:
         return self.mapper(**value)
 
 
+@dataclasses.dataclass
+class DataclassField(Field):
+    @classmethod
+    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+        for f in typ.__dataclass_fields__.values():  # type: ignore
+            annotation = get_type(type_hints[f.name])
+
+            annotation, args = get_annotation_args(annotation)
+
+            field = cls(
+                name=f.name,
+                type=annotation,
+                annotations=args,
+                mapper=annotation,
+            )
+            fields.append(field)
+        return fields
+
+
+@dataclasses.dataclass
+class AttrsField(Field):
+    @classmethod
+    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+
+        for f in typ.__attrs_attrs__:  # type: ignore
+            annotation = get_type(type_hints[f.name])
+            annotation, args = get_annotation_args(annotation)
+
+            field = cls(
+                name=f.name,
+                type=annotation,
+                annotations=args,
+                mapper=annotation,
+            )
+            fields.append(field)
+        return fields
+
+
+@dataclasses.dataclass
+class MsgspecField(Field):
+    @classmethod
+    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+        import msgspec
+
+        fields = []
+        for f in msgspec.structs.fields(typ):
+            annotation = get_type(type_hints[f.name])
+            annotation, args = get_annotation_args(annotation)
+
+            def splat_mapper(**value):
+                return msgspec.convert(value, annotation)
+
+            mapper = splat_mapper if detect(annotation) else annotation
+
+            field = cls(
+                name=f.name,
+                type=annotation,
+                annotations=args,
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+
+@dataclasses.dataclass
+class PydanticV1Field(Field):
+    @classmethod
+    def collect(cls, typ, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+        for name, f in typ.__fields__.items():
+            annotation = get_type(type_hints[name])
+            annotation, args = get_annotation_args(annotation)
+
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=annotation,
+                annotations=args,
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+
+@dataclasses.dataclass
+class PydanticV2Field(Field):
+    @classmethod
+    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+        for name, f in typ.model_fields.items():  # type: ignore
+            annotation = get_type(type_hints[name])
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=annotation,
+                annotations=tuple(f.metadata),
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+
+@dataclasses.dataclass
+class PydanticV2DataclassField(Field):
+    @classmethod
+    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+        fields = []
+
+        for name, f in typ.__pydantic_fields__.items():  # type: ignore
+            annotation = get_type(type_hints[name])
+            mapper = annotation if detect(annotation) else None
+
+            field = cls(
+                name=name,
+                type=annotation,
+                annotations=tuple(f.metadata),
+                mapper=mapper,
+            )
+            fields.append(field)
+        return fields
+
+
 def fields(cls: type):
     class_type = ClassTypes.from_cls(cls)
+    if class_type is None:  # pragma: no cover
+        raise ValueError(
+            f"'{cls.__qualname__}' is not a currently supported kind of class. "
+            "Must be one of: dataclass, pydantic, or attrs class."
+        )
 
     type_hints = get_type_hints(cls, include_extras=True)
-    if class_type == ClassTypes.dataclass:
-        return Field.from_dataclass(cls, type_hints)
+    return class_type.value.collect(cls, type_hints)
 
-    if class_type == ClassTypes.pydantic:
-        return Field.from_pydantic(cls, type_hints)
 
-    if class_type == ClassTypes.pydantic_v1:
-        return Field.from_pydantic_v1(cls, type_hints)
+class ClassTypes(Enum):
+    attrs = AttrsField
+    dataclass = DataclassField
+    pydantic_v1 = PydanticV1Field
+    pydantic_v2 = PydanticV2Field
+    pydantic_v2_dataclass = PydanticV2DataclassField
+    msgspec = MsgspecField
 
-    if class_type == ClassTypes.pydantic_dataclass:
-        return Field.from_pydantic_dataclass(cls, type_hints)
+    @classmethod
+    def from_cls(cls, obj: type) -> ClassTypes | None:
+        if hasattr(obj, "__pydantic_fields__"):
+            return cls.pydantic_v2_dataclass
 
-    if class_type == ClassTypes.attrs:
-        return Field.from_attrs(cls, type_hints)
+        if dataclasses.is_dataclass(obj):
+            return cls.dataclass
 
-    raise NotImplementedError()  # pragma: no cover
+        if hasattr(obj, "__struct_config__"):
+            assert obj.__struct_config__.__class__.__module__.startswith("msgspec")
+            return cls.msgspec
+
+        try:
+            import pydantic
+            from pydantic import BaseModel
+        except ImportError:  # pragma: no cover
+            pass
+        else:
+            try:
+                is_base_model = isinstance(obj, type) and issubclass(obj, BaseModel)
+            except TypeError:  # pragma: no cover
+                is_base_model = False
+
+            if is_base_model:
+                if pydantic.__version__.startswith("1."):
+                    return cls.pydantic_v1
+                return cls.pydantic_v2
+
+        if hasattr(obj, "__attrs_attrs__"):
+            return cls.attrs
+
+        return None
 
 
 def get_type(typ):
