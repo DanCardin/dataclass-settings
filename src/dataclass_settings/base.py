@@ -5,7 +5,7 @@ from typing import Any, Sequence, TypeVar
 
 from dataclass_settings import class_inspect
 from dataclass_settings.context import Context
-from dataclass_settings.loaders import Env, Loader, Secret
+from dataclass_settings.loaders import Env, Loader, Secret, Toml
 
 log = logging.getLogger("dataclass_settings")
 
@@ -16,7 +16,7 @@ T = TypeVar("T")
 def load_settings(
     source_cls: type[T],
     *,
-    loaders: Sequence[type[Loader]] = (Env, Secret),
+    loaders: Sequence[type[Loader]] = (Env, Secret, Toml),
     extra_loaders: Sequence[type[Loader]] = (),
     nested_delimiter: bool | str = False,
     infer_names: bool = False,

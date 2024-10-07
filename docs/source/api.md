@@ -9,7 +9,7 @@
 
 ```{eval-rst}
 .. autoapimodule:: dataclass_settings.loaders
-   :members: Env, Secret, Loader
+   :members: Env, Secret, Loader, Toml
 ```
 
 ## Context

@@ -4,11 +4,12 @@ A "loader" is defined as a class which implements the
 [dataclass_settings.Loader](dataclass_settings.loaders.Loader) protocol. i.e. a
 type with a method `load(context: Context)`.
 
-Currently the library ships with two loaders:
+The library ships with a few loaders:
 
 - `Env`: Loads environment variables
 - `Secrets`: Loads file contents (defaults to `/run/secrets/...`, which ensures
   compatibility with Docker Secrets)
+- `Toml`: Loads values from a toml file
 
 Additional 1st party loaders will be accepted, but any loader which requires
 additional dependencies (for example, `AWS Secrets Manager` would imply `boto3`)

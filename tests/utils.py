@@ -1,5 +1,8 @@
 import contextlib
+import sys
 from unittest.mock import mock_open, patch
+
+import pytest
 
 
 @contextlib.contextmanager
@@ -18,3 +21,7 @@ def env_setup(env={}, files={}):
 
     with env_patch, files_patch, exists_patch:
         yield
+
+
+def skip_under(major: int, minor: int, *, reason: str):
+    return pytest.mark.skipif(sys.version_info < (major, minor), reason=reason)

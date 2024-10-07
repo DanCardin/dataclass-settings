@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import partial
-from typing import cast, runtime_checkable
+from pathlib import Path, PurePath
+from typing import Any, cast, runtime_checkable
 
 from typing_extensions import Protocol, assert_never
 
@@ -13,7 +14,7 @@ from dataclass_settings.context import Context
 @runtime_checkable
 class Loader(Protocol):
     @staticmethod
-    def init():
+    def init() -> Any:
         """Return any state necessary to be shared across instances of the loader."""
         return
 
@@ -21,7 +22,7 @@ class Loader(Protocol):
     def partial(cls, **kwargs):
         return partial(cls, **kwargs)  # type: ignore
 
-    def load(self, context: Context):
+    def load(self, context: Context) -> Any:
         assert_never()  # type: ignore
 
 
@@ -33,10 +34,10 @@ class Env(Loader):
         self.env_vars = env_vars
 
     @staticmethod
-    def init():
+    def init() -> Any:
         return os.environ
 
-    def load(self, context: Context):
+    def load(self, context: Context) -> Any:
         state = context.get_state(self) or {}
 
         field_name = cast(str, context.field_name)
@@ -69,7 +70,7 @@ class Secret(Loader):
         self.names = names
         self.dir = dir
 
-    def load(self, context: Context):
+    def load(self, context: Context) -> Any:
         field_name = cast(str, context.field_name)
         if not self.names and not context.infer_names:
             field = ".".join([*context.path, field_name])
@@ -87,3 +88,43 @@ class Secret(Loader):
                     return f.read()
 
         return None
+
+
+@dataclass
+class Toml(Loader):
+    file: str | PurePath
+    key: str | None = None
+
+    @staticmethod
+    def init():
+        return {}
+
+    def load(self, context: Context) -> Any:
+        field_name = cast(str, context.field_name)
+        if not self.key and not context.infer_names:
+            field = ".".join([*context.path, field_name])
+            raise ValueError(
+                f"Toml instance for `{field}` supplies no `key` and `infer_names` is enabled"
+            )
+
+        key = self.key or field_name
+
+        import tomllib
+
+        state = cast(dict, context.get_state(self))
+
+        file = Path(self.file)
+        if file not in state:
+            file_content = file.read_text()
+            state[file] = tomllib.loads(file_content)
+
+        file_context = state[file]
+        context.record_loaded_value(self, str(self.file), file_context)
+
+        for segment in key.split("."):
+            try:
+                file_context = file_context[segment]
+            except KeyError:
+                continue
+
+        return file_context
