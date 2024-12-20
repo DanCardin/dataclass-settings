@@ -162,3 +162,64 @@ def test_missing_infer_name_or_env_var():
         str(e.value)
         == "Env instance for `bar` supplies no `env_var` and `infer_names` is enabled"
     )
+
+
+def test_common_dir():
+    my_secret = Secret.with_dir("/foo/bar")
+
+    class Foo(BaseModel):
+        nested: Annotated[str, my_secret()]
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, my_secret()]
+
+    with env_setup(files={"/foo/bar/bar": "2", "/foo/bar/foo_nested": "nest!"}):
+        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+
+def test_dir_fallback():
+    class Foo(BaseModel):
+        nested: Annotated[str, Secret(dir=("/asdf", "/foo/bar"))]
+
+    my_secret = Secret.with_dir("/asdf", "/foo/bar")
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, my_secret()]
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/asdf/bar": "2"}):
+        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+
+def test_dir_configured_at_loader():
+    class Foo(BaseModel):
+        nested: Annotated[str, Secret()]
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, Secret()] = 3
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/bar/baz/bar": "2"}):
+        config = load_settings(
+            Config,
+            nested_delimiter="_",
+            infer_names=True,
+            loader_args=Secret.load_as(dir=("/foo/bar", "/bar/baz")),
+        )
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/bar/baz/bar": "2"}):
+        config = load_settings(
+            Config,
+            nested_delimiter="_",
+            infer_names=True,
+            loader_args=Secret.load_as(dir="/foo/bar"),
+        )
+
+    assert config == Config(bar=3, foo=Foo(nested="nest!"))

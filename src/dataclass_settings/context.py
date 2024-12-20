@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Mapping, cast
 
 if TYPE_CHECKING:
     from dataclass_settings.loaders import Loader
@@ -35,7 +35,11 @@ class Context:
         return name
 
     def load_state(self, loader: type[Loader], args: Any | None = None):
-        state = loader.init(*(args or ()))
+        if isinstance(args, Mapping):
+            state = loader.init(**args)
+        else:
+            state = loader.init(*(args or ()))
+
         if state is not None:
             self.state[loader] = state
 
