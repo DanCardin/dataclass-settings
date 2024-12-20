@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7
+
+### 0.7.0
+* feat: Abstract Loader "state" from the loader. This enables supplying state
+  once at load-time in order to customize load-wide settings.
+
 ## 0.6
 
 ### 0.6.1

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
-from typing import Any, Callable, Sequence, Type
+from typing import TYPE_CHECKING, Any, Callable, Sequence, Type
 
 from type_lens import TypeView
 from typing_extensions import Self, get_type_hints
 
-from dataclass_settings.loaders import Loader
+if TYPE_CHECKING:
+    from dataclass_settings.loader import Loader
 
 __all__ = [
     "detect",

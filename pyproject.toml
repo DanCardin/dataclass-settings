@@ -1,6 +1,6 @@
 [project]
 name = "dataclass-settings"
-version = "0.6.1"
+version = "0.7.0"
 description = "Declarative dataclass settings."
 
 urls = { repository = "https://github.com/dancardin/dataclass-settings" }
@@ -13,9 +13,6 @@ classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
 requires-python = ">=3.8,<4"
 
 dependencies = ["typing-extensions >= 4.7.1", "type-lens >= 0.2.5"]
-
-[project.optional-dependencies]
-docstring = ["docstring-parser >= 0.15"]
 
 [tool.uv]
 dev-dependencies = [
