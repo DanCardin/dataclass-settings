@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Sequence, TypeVar
+from typing import Any, Mapping, Sequence, TypeVar
 
 from dataclass_settings import class_inspect
 from dataclass_settings.context import Context
@@ -20,7 +20,7 @@ def load_settings(
     extra_loaders: Sequence[type[Loader]] = (),
     nested_delimiter: bool | str = False,
     infer_names: bool = False,
-    loader_args: dict[type[Loader], Sequence[Any]] | None = None,
+    loader_args: dict[type[Loader], Sequence[Any] | Mapping[str, Any]] | None = None,
     emit_history: bool = False,
 ) -> T:
     """Load settings from a supported source class.

@@ -4,9 +4,9 @@ import os
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path, PurePath
-from typing import Any, cast, runtime_checkable
+from typing import Any, Mapping, Sequence, cast, runtime_checkable
 
-from typing_extensions import Protocol, assert_never
+from typing_extensions import Protocol, Self, assert_never
 
 from dataclass_settings.context import Context
 
@@ -14,13 +14,13 @@ from dataclass_settings.context import Context
 @runtime_checkable
 class Loader(Protocol):
     @staticmethod
-    def init() -> Any:
+    def init() -> Any:  # pragma: no cover
         """Return any state necessary to be shared across instances of the loader."""
         return
 
     @classmethod
     def partial(cls, **kwargs):
-        return partial(cls, **kwargs)  # type: ignore
+        return partial(cls, **kwargs)
 
     def load(self, context: Context) -> Any:
         assert_never()  # type: ignore
@@ -64,11 +64,19 @@ class Env(Loader):
 @dataclass(init=False)
 class Secret(Loader):
     names: tuple[str, ...]
-    dir: str = "/run/secrets"
+    dir: Sequence[str] = ("/run/secrets",)
 
-    def __init__(self, *names: str, dir: str = dir):
+    def __init__(self, *names: str, dir: str | Sequence[str] = dir):
         self.names = names
-        self.dir = dir
+
+        if isinstance(dir, str):
+            self.dir = (dir,)
+        else:
+            self.dir = dir
+
+    @staticmethod
+    def init(dir: Sequence[str] | None = None) -> Sequence[str] | None:
+        return dir
 
     def load(self, context: Context) -> Any:
         field_name = cast(str, context.field_name)
@@ -78,16 +86,37 @@ class Secret(Loader):
                 f"Env instance for `{field}` supplies no `env_var` and `infer_names` is enabled"
             )
 
+        dirs = cast(Sequence[str] | None, context.get_state(self))
+        if not dirs:
+            dirs = self.dir
+
         names = [field_name] if context.infer_names else self.names
         for name in names:
             final_name = context.get_name(name)
-            path = os.path.join(self.dir, final_name)
 
-            if os.path.exists(path):
-                with open(path) as f:
-                    return f.read()
+            for dir in dirs:
+                path = os.path.join(dir, final_name)
+
+                if os.path.exists(path):
+                    with open(path) as f:
+                        return f.read()
 
         return None
+
+    @classmethod
+    def with_dir(cls, *dir: str) -> partial[Self]:
+        return partial(cls, dir=dir)
+
+    @classmethod
+    def load_as(
+        cls,
+        *,
+        dir: Sequence[str] | str,
+    ) -> dict[type[Loader], Sequence[Any] | Mapping[str, Any]]:
+        if isinstance(dir, str):
+            dir = (dir,)
+
+        return {cls: {"dir": dir}}
 
 
 @dataclass
