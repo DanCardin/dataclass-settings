@@ -209,7 +209,7 @@ def test_dir_configured_at_loader():
             Config,
             nested_delimiter="_",
             infer_names=True,
-            loader_args=Secret.load_as(dir=("/foo/bar", "/bar/baz")),
+            loader_args=Secret.load_with(dir=("/foo/bar", "/bar/baz")),
         )
 
     assert config == Config(bar=2, foo=Foo(nested="nest!"))
@@ -219,7 +219,7 @@ def test_dir_configured_at_loader():
             Config,
             nested_delimiter="_",
             infer_names=True,
-            loader_args=Secret.load_as(dir="/foo/bar"),
+            loader_args=Secret.load_with(dir="/foo/bar"),
         )
 
     assert config == Config(bar=3, foo=Foo(nested="nest!"))
