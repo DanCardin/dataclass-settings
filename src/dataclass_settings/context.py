@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Mapping, cast
 
 if TYPE_CHECKING:
-    from dataclass_settings.loaders import Loader
+    from dataclass_settings.loader import Loader, LoaderState, LoaderType
 
 
 @dataclass
 class Context:
     path: list[str] = field(default_factory=list)
     field_name: str | None = None
-    state: dict[type[Loader], Any] = field(default_factory=dict)
+    state: dict[type[Loader], LoaderState] = field(default_factory=dict)
 
     nested_delimiter: bool | str = False
     infer_names: bool = False
@@ -34,13 +34,19 @@ class Context:
             return nested_delimiter.join([*self.path, name])
         return name
 
-    def load_state(self, loader: type[Loader], args: Any | None = None):
-        state = loader.init(*(args or ()))
-        if state is not None:
-            self.state[loader] = state
+    def load_state(self, loader: LoaderType) -> type[Loader]:
+        if isinstance(loader, LoaderState):
+            loader_type = loader.loader_type
+            state = loader
+        else:
+            loader_type = loader
+            state = loader.load_with()
 
-    def get_state(self, loader: Loader):
-        return self.state.get(type(loader))
+        self.state[loader_type] = state
+        return loader_type
+
+    def get_state(self, loader: Loader) -> LoaderState:
+        return self.state[type(loader)]
 
     def record_loaded_value(self, loader: Loader, name: str, value: Any):
         if not self.record_history:
