@@ -2,10 +2,10 @@ import textwrap
 from typing import List, Union
 
 import pytest
-from dataclass_settings import Env, load_settings
 from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import Annotated
 
+from dataclass_settings import Env, load_settings
 from tests.utils import env_setup
 
 
@@ -110,11 +110,9 @@ def test_arbitrary_annotation_skipped():
 
 
 def test_union_of_supportable_class_types():
-    class Foo(BaseModel):
-        ...
+    class Foo(BaseModel): ...
 
-    class Bar(BaseModel):
-        ...
+    class Bar(BaseModel): ...
 
     class Config(BaseModel):
         foo: Union[Foo, Bar]

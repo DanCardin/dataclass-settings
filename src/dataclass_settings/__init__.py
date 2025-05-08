@@ -3,10 +3,10 @@ from dataclass_settings.context import Context
 from dataclass_settings.loaders import Env, Loader, Secret, Toml
 
 __all__ = [
+    "Context",
     "Env",
-    "load_settings",
     "Loader",
     "Secret",
-    "Context",
     "Toml",
+    "load_settings",
 ]
