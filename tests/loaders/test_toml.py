@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pytest
+from msgspec import Struct
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Annotated
 
@@ -12,7 +15,7 @@ def test_missing_required():
         foo: Annotated[
             int,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.asdf",
             ),
         ]
@@ -27,14 +30,14 @@ def test_has_required_required():
         foo: Annotated[
             str,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.name",
             ),
         ]
         license: Annotated[
             str,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.license",
             ),
         ]
@@ -49,7 +52,9 @@ def test_has_required_required():
 @skip_under(3, 11, reason="Requires tomllib")
 def test_missing_optional_inferred_name():
     class Config(BaseModel):
-        tool: Annotated[int, Toml("pyproject.toml")]
+        tool: Annotated[
+            int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")
+        ]
         ignoreme: str = "asdf"
 
     with pytest.raises(ValueError) as e:
@@ -58,3 +63,18 @@ def test_missing_optional_inferred_name():
         str(e.value)
         == "Toml instance for `tool` supplies no `key` and `infer_names` is enabled"
     )
+
+
+@skip_under(3, 11, reason="Requires tomllib")
+@pytest.mark.parametrize(
+    "config_class, exc_class", [(BaseModel, ValidationError), (Struct, TypeError)]
+)
+def test_empty_toml(config_class, exc_class, tmp_path: Path):
+    empty_toml = tmp_path / "empty.toml"
+    empty_toml.write_text("")
+
+    class Config(config_class):
+        tool: Annotated[int, Toml(empty_toml, "tool.poetry.asdf")]
+
+    with env_setup({}), pytest.raises(exc_class):
+        load_settings(Config)

@@ -125,6 +125,6 @@ class Toml(Loader):
             try:
                 file_context = file_context[segment]
             except KeyError:
-                continue
+                return None
 
         return file_context
