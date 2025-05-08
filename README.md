@@ -14,6 +14,7 @@ including but not limited to:
 - [Pydantic models](https://pydantic-docs.helpmanual.io/) (v1/v2),
 - [dataclasses](https://docs.python.org/3/library/dataclasses.html)
 - [attrs classes](https://www.attrs.org/en/stable/).
+- [msgspec models](https://jcristharif.com/msgspec/).
 
 `dataclass-settings` owes its existence
 [pydantic-settings](https://github.com/pydantic/pydantic-settings), in that

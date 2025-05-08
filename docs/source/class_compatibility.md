@@ -9,6 +9,7 @@ with adapters for
 [dataclasses](https://docs.python.org/3/library/dataclasses.html),
 [Pydantic](https://pydantic-docs.helpmanual.io/), and
 [attrs](https://www.attrs.org).
+[msgspec models](https://jcristharif.com/msgspec/).
 
 ## Pydantic
 
@@ -38,3 +39,7 @@ the output type can be constructed from a raw input string.
 For example, `int`, `float`, `Decimal`, `bool`, `str`, etc. For anything more
 complex, dataclasses will probably not be the most productive choice (at least
 until/if [PEP-712](https://peps.python.org/pep-0712/) is accepted/merged)
+
+## Msgspec
+Msgspec models are supported as of v0.4.0.
+
