@@ -1,20 +1,45 @@
 import textwrap
+from dataclasses import dataclass
 from typing import List, Union
 
 import pytest
+from attr import dataclass as attr_dataclass
+from msgspec import Struct
 from pydantic import BaseModel, Field, ValidationError
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 from typing_extensions import Annotated
 
 from dataclass_settings import Env, load_settings
 from tests.utils import env_setup
 
 
-def test_missing_required():
-    class Config(BaseModel):
-        foo: Annotated[int, Env("FOO")]
+class PydanticConfig(BaseModel):
+    foo: Annotated[int, Env("FOO")]
 
+
+@dataclass
+class DataclassConfig:
+    foo: Annotated[int, Env("FOO")]
+
+
+@pydantic_dataclass
+class PDataclassConfig:
+    foo: Annotated[int, Env("FOO")]
+
+
+@attr_dataclass
+class AttrConfig:
+    foo: Annotated[int, Env("FOO")]
+
+
+class MsgspecConfig(Struct):
+    foo: Annotated[int, Env("FOO")]
+
+
+@pytest.mark.parametrize("config", [PydanticConfig, DataclassConfig, MsgspecConfig, PDataclassConfig, AttrConfig])
+def test_missing_required(config):
     with env_setup({}), pytest.raises(ValidationError):
-        load_settings(Config)
+        load_settings(config)
 
 
 def test_has_required_required():
