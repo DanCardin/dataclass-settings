@@ -1,5 +1,6 @@
-from dataclass_settings import load_settings
 from pydantic import BaseModel
+
+from dataclass_settings import load_settings
 
 
 def test_successful_validation_of_fully_default_subobjects():

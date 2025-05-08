@@ -10,8 +10,8 @@ from typing_extensions import Annotated, Self, get_args, get_origin, get_type_hi
 from dataclass_settings.loaders import Loader
 
 __all__ = [
-    "fields",
     "detect",
+    "fields",
 ]
 
 

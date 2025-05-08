@@ -1,7 +1,7 @@
-from dataclass_settings import Env, Secret, load_settings
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
+from dataclass_settings import Env, Secret, load_settings
 from tests.utils import env_setup
 
 

@@ -1,15 +1,21 @@
 import pytest
-from dataclass_settings import Toml, load_settings
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Annotated
 
+from dataclass_settings import Toml, load_settings
 from tests.utils import env_setup, skip_under
 
 
 @skip_under(3, 11, reason="Requires tomllib")
 def test_missing_required():
     class Config(BaseModel):
-        foo: Annotated[int, Toml("pyproject.toml", "tool.poetry.asdf")]
+        foo: Annotated[
+            int,
+            Toml(
+                "pyproject.toml",
+                "tool.poetry.asdf",
+            ),
+        ]
 
     with env_setup({}), pytest.raises(ValidationError):
         load_settings(Config)
@@ -18,8 +24,20 @@ def test_missing_required():
 @skip_under(3, 11, reason="Requires tomllib")
 def test_has_required_required():
     class Config(BaseModel):
-        foo: Annotated[str, Toml("pyproject.toml", "tool.poetry.name")]
-        license: Annotated[str, Toml("pyproject.toml", "tool.poetry.license")]
+        foo: Annotated[
+            str,
+            Toml(
+                "pyproject.toml",
+                "tool.poetry.name",
+            ),
+        ]
+        license: Annotated[
+            str,
+            Toml(
+                "pyproject.toml",
+                "tool.poetry.license",
+            ),
+        ]
         ignoreme: str = "asdf"
 
     config = load_settings(Config)

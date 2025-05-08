@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 import pytest
-from dataclass_settings import Env, load_settings
 from msgspec import Struct
 from typing_extensions import Annotated
 
+from dataclass_settings import Env, load_settings
 from tests.utils import env_setup
 
 

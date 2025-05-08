@@ -2,9 +2,9 @@ from decimal import Decimal
 
 import pytest
 from attrs import define, field
-from dataclass_settings import Env, load_settings
 from typing_extensions import Annotated
 
+from dataclass_settings import Env, load_settings
 from tests.utils import env_setup
 
 

@@ -3,9 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from attr import dataclass as attr_dataclass
-from dataclass_settings import load_settings
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
+
+from dataclass_settings import load_settings
 
 
 class PydanticConfig(BaseModel):

@@ -3,10 +3,10 @@ from __future__ import annotations
 from decimal import Decimal
 
 import pytest
-from dataclass_settings import Env, load_settings
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Annotated
 
+from dataclass_settings import Env, load_settings
 from tests.utils import env_setup
 
 
