@@ -66,13 +66,15 @@ def test_missing_optional_inferred_name():
 
 
 @skip_under(3, 11, reason="Requires tomllib")
-@pytest.mark.parametrize("config_class", [BaseModel, Struct])
-def test_empty_toml(config_class, tmp_path: Path):
+@pytest.mark.parametrize(
+    "config_class, exc_class", [(BaseModel, ValidationError), (Struct, TypeError)]
+)
+def test_empty_toml(config_class, exc_class, tmp_path: Path):
     empty_toml = tmp_path / "empty.toml"
     empty_toml.write_text("")
 
     class Config(config_class):
         tool: Annotated[int, Toml(empty_toml, "tool.poetry.asdf")]
 
-    with env_setup({}), pytest.raises(ValidationError):
+    with env_setup({}), pytest.raises(exc_class):
         load_settings(Config)
