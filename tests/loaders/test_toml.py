@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Annotated
@@ -12,7 +14,7 @@ def test_missing_required():
         foo: Annotated[
             int,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.asdf",
             ),
         ]
@@ -27,14 +29,14 @@ def test_has_required_required():
         foo: Annotated[
             str,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.name",
             ),
         ]
         license: Annotated[
             str,
             Toml(
-                "pyproject.toml",
+                Path(__file__).parent.parent.parent / "pyproject.toml",
                 "tool.poetry.license",
             ),
         ]
@@ -49,7 +51,9 @@ def test_has_required_required():
 @skip_under(3, 11, reason="Requires tomllib")
 def test_missing_optional_inferred_name():
     class Config(BaseModel):
-        tool: Annotated[int, Toml("pyproject.toml")]
+        tool: Annotated[
+            int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")
+        ]
         ignoreme: str = "asdf"
 
     with pytest.raises(ValueError) as e:
