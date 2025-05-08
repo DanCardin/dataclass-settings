@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from dataclass_settings import Toml, load_settings
 from pydantic import BaseModel, ValidationError
@@ -9,7 +11,7 @@ from tests.utils import env_setup, skip_under
 @skip_under(3, 11, reason="Requires tomllib")
 def test_missing_required():
     class Config(BaseModel):
-        foo: Annotated[int, Toml("pyproject.toml", "tool.poetry.asdf")]
+        foo: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf")]
 
     with env_setup({}), pytest.raises(ValidationError):
         load_settings(Config)
@@ -18,8 +20,8 @@ def test_missing_required():
 @skip_under(3, 11, reason="Requires tomllib")
 def test_has_required_required():
     class Config(BaseModel):
-        foo: Annotated[str, Toml("pyproject.toml", "tool.poetry.name")]
-        license: Annotated[str, Toml("pyproject.toml", "tool.poetry.license")]
+        foo: Annotated[str, Toml(Path(__file__).parent.parent.parent /"pyproject.toml", "tool.poetry.name")]
+        license: Annotated[str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.license")]
         ignoreme: str = "asdf"
 
     config = load_settings(Config)
@@ -31,7 +33,7 @@ def test_has_required_required():
 @skip_under(3, 11, reason="Requires tomllib")
 def test_missing_optional_inferred_name():
     class Config(BaseModel):
-        tool: Annotated[int, Toml("pyproject.toml")]
+        tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
         ignoreme: str = "asdf"
 
     with pytest.raises(ValueError) as e:
