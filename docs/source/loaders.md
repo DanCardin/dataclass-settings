@@ -22,18 +22,18 @@ Defining your own loader is relatively simple:
 ```python
 from typing import Annotated
 from pydantic import BaseModel
-from dataclass_settings import Loader, load_settings
+from dataclass_settings import Loader, load_settings, Context
 
-class Foo(Loader):
-    prefix: str
+class FooLoader(Loader):
+  prefix: str
 
-    def load(self, context: Context):
-        """Adds a prefix str to the end of the field name."""
-        return self.prefix + context.field_name
+  def load(self, context: Context):
+    """Adds a prefix str to the end of the field name."""
+    return self.prefix + context.field_name
 
 
 class Config(BaseModel):
-    foo: Annotated[str, FooLoader('pref_')]
+  foo: Annotated[str, FooLoader('pref_')]
 
 
 
