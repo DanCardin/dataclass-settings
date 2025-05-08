@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from msgspec import Struct
 from pydantic import BaseModel, ValidationError
 from typing_extensions import Annotated
 
@@ -62,3 +63,16 @@ def test_missing_optional_inferred_name():
         str(e.value)
         == "Toml instance for `tool` supplies no `key` and `infer_names` is enabled"
     )
+
+
+@skip_under(3, 11, reason="Requires tomllib")
+@pytest.mark.parametrize("config_class", [BaseModel, Struct])
+def test_empty_toml(config_class, tmp_path: Path):
+    empty_toml = tmp_path / "empty.toml"
+    empty_toml.write_text("")
+
+    class Config(config_class):
+        tool: Annotated[int, Toml(empty_toml, "tool.poetry.asdf")]
+
+    with env_setup({}), pytest.raises(ValidationError):
+        load_settings(Config)
