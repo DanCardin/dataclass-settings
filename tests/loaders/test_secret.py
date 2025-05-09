@@ -543,18 +543,72 @@ def test_partial(config_class):
     assert config == config_class(foo="one")
 
 
-def test_infer_name():
-    class Foo(BaseModel):
-        nested: Annotated[str, Secret()]
+@attr_dataclass
+class AttrsFooInfer:
+    nested: Annotated[str, Secret()]
 
-    class Config(BaseModel):
-        foo: Foo
-        bar: Annotated[int, Secret()]
 
+@attr_dataclass
+class AttrsInferName:
+    foo: AttrsFooInfer
+    bar: Annotated[int, Secret()]
+
+
+@dataclass
+class DataclassFooInfer:
+    nested: Annotated[str, Secret()]
+
+
+@dataclass
+class DataclassInferName:
+    foo: DataclassFooInfer
+    bar: Annotated[int, Secret()]
+
+
+class MsgspecFooInfer(Struct):
+    nested: Annotated[str, Secret()]
+
+
+class MsgspecInferName(Struct):
+    foo: MsgspecFooInfer
+    bar: Annotated[int, Secret()]
+
+
+class PydanticFooInfer(BaseModel):
+    nested: Annotated[str, Secret()]
+
+
+class PydanticInferName(BaseModel):
+    foo: PydanticFooInfer
+    bar: Annotated[int, Secret()]
+
+
+@pydantic_dataclass
+class PydanticFooInferDataclass:
+    nested: Annotated[str, Secret()]
+
+
+@pydantic_dataclass
+class PydanticInferNameDataclass:
+    foo: PydanticFooInferDataclass
+    bar: Annotated[int, Secret()]
+
+
+@pytest.mark.parametrize(
+    "config_class, config_infer_name",
+    [
+        (AttrsInferName, AttrsFooInfer),
+        (DataclassInferName, DataclassFooInfer),
+        (MsgspecInferName, MsgspecFooInfer),
+        (PydanticInferName, PydanticFooInfer),
+        (PydanticInferNameDataclass, PydanticInferNameDataclass),
+    ],
+)
+def test_infer_name(config_class, config_infer_name):
     with env_setup(files={"/run/secrets/bar": "2", "/run/secrets/foo_nested": "nest!"}):
-        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+        config = load_settings(config_class, nested_delimiter="_", infer_names=True)
 
-    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+    assert config == config_class(bar=2, foo=config_infer_name(nested="nest!"))
 
 
 def test_missing_infer_name_or_env_var():
