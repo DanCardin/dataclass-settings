@@ -17,29 +17,29 @@ from tests.utils import env_setup
 
 
 @attr_dataclass
-class AttrConfigRequired:
+class AttrRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
 @dataclass
-class DataclassConfigRequired:
+class DataclassRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
-class MsgspecConfigRequired(Struct):
+class MsgspecRequired(Struct):
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
-class PydanticConfigRequired(BaseModel):
+class PydanticRequired(BaseModel):
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
 @pydantic_dataclass
-class PDataclassConfigRequired:
+class PDataclassRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
@@ -47,11 +47,11 @@ class PDataclassConfigRequired:
 @pytest.mark.parametrize(
     "config_class, exc_class",
     [
-        (AttrConfigRequired, TypeError),
-        (DataclassConfigRequired, TypeError),
-        (MsgspecConfigRequired, TypeError),
-        (PydanticConfigRequired, ValidationError),
-        (PDataclassConfigRequired, ValidationError),
+        (AttrRequired, TypeError),
+        (DataclassRequired, TypeError),
+        (MsgspecRequired, TypeError),
+        (PydanticRequired, ValidationError),
+        (PDataclassRequired, ValidationError),
     ],
 )
 def test_missing_required(config_class, exc_class):
@@ -62,11 +62,11 @@ def test_missing_required(config_class, exc_class):
 @pytest.mark.parametrize(
     "config_class",
     [
-        AttrConfigRequired,
-        DataclassConfigRequired,
-        MsgspecConfigRequired,
-        PydanticConfigRequired,
-        PDataclassConfigRequired,
+        AttrRequired,
+        DataclassRequired,
+        MsgspecRequired,
+        PydanticRequired,
+        PDataclassRequired,
     ],
 )
 def test_has_required_required(config_class):
@@ -77,29 +77,29 @@ def test_has_required_required(config_class):
 
 
 @attr_dataclass
-class AttrConfigFallback:
+class AttrFallback:
     foo: Annotated[int, Env("FOO")]
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
 @dataclass
-class DataclassConfigFallback:
+class DataclassFallback:
     foo: Annotated[int, Env("FOO")]
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
-class MsgspecConfigFallback(Struct):
+class MsgspecFallback(Struct):
     foo: Annotated[int, Env("FOO")]
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
-class PydanticConfigFallback(BaseModel):
+class PydanticFallback(BaseModel):
     foo: Annotated[int, Env("FOO")]
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
 @pydantic_dataclass
-class PDataclassConfigFallback:
+class PDataclassFallback:
     foo: Annotated[int, Env("FOO")]
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
@@ -107,11 +107,11 @@ class PDataclassConfigFallback:
 @pytest.mark.parametrize(
     "config_class",
     [
-        AttrConfigFallback,
-        DataclassConfigFallback,
-        MsgspecConfigFallback,
-        PydanticConfigFallback,
-        PDataclassConfigFallback,
+        AttrFallback,
+        DataclassFallback,
+        MsgspecFallback,
+        PydanticFallback,
+        PDataclassFallback,
     ],
 )
 def test_fallback(config_class):
@@ -122,79 +122,79 @@ def test_fallback(config_class):
 
 
 @attr_dataclass
-class AttrConfigNestedBar:
+class AttrNestedBar:
     value: Annotated[str, Env("VALUE")]
     meow: Annotated[str, Env("MEOW")] = "meow"
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
 @attr_dataclass
-class AttrConfigNested:
+class AttrNested:
     foo: Annotated[int, Env("FOO")]
-    bar: AttrConfigNestedBar
+    bar: AttrNestedBar
     ignoreme: str = "asdf"
 
 
 @dataclass
-class DataclassConfigNestedBar:
+class DataclassNestedBar:
     value: Annotated[str, Env("VALUE")]
     meow: Annotated[str, Env("MEOW")] = "meow"
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
 @dataclass
-class DataclassConfigNested:
+class DataclassNested:
     foo: Annotated[int, Env("FOO")]
-    bar: DataclassConfigNestedBar
+    bar: DataclassNestedBar
     ignoreme: str = "asdf"
 
 
-class MsgspecConfigNestedBar(Struct):
+class MsgspecNestedBar(Struct):
     value: Annotated[str, Env("VALUE")]
     meow: Annotated[str, Env("MEOW")] = "meow"
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
-class MsgspecConfigNested(Struct):
+class MsgspecNested(Struct):
     foo: Annotated[int, Env("FOO")]
-    bar: MsgspecConfigNestedBar
+    bar: MsgspecNestedBar
     ignoreme: str = "asdf"
 
 
-class PydanticConfigNestedBar(BaseModel):
+class PydanticNestedBar(BaseModel):
     value: Annotated[str, Env("VALUE")]
     meow: Annotated[str, Env("MEOW")] = "meow"
     default: Annotated[str, Env("MEOW", "UHH")] = Field(default="ok")
 
 
-class PydanticConfigNested(BaseModel):
+class PydanticNested(BaseModel):
     foo: Annotated[int, Env("FOO")]
-    bar: PydanticConfigNestedBar
+    bar: PydanticNestedBar
     ignoreme: str = "asdf"
 
 
 @pydantic_dataclass
-class PDataclassConfigNestedBar:
+class PDataclassNestedBar:
     value: Annotated[str, Env("VALUE")]
     meow: Annotated[str, Env("MEOW")] = "meow"
     default: Annotated[str, Env("MEOW", "UHH")] = "ok"
 
 
 @pydantic_dataclass
-class PDataclassConfigNested:
+class PDataclassNested:
     foo: Annotated[int, Env("FOO")]
-    bar: PDataclassConfigNestedBar
+    bar: PDataclassNestedBar
     ignoreme: str = "asdf"
 
 
 @pytest.mark.parametrize(
     "config_class, config_class_nested",
     [
-        (AttrConfigNested, AttrConfigNestedBar),
-        (DataclassConfigNested, DataclassConfigNestedBar),
-        (MsgspecConfigNested, MsgspecConfigNestedBar),
-        (PydanticConfigNested, PydanticConfigNestedBar),
-        (PDataclassConfigNested, PDataclassConfigNestedBar),
+        (AttrNested, AttrNestedBar),
+        (DataclassNested, DataclassNestedBar),
+        (MsgspecNested, MsgspecNestedBar),
+        (PydanticNested, PydanticNestedBar),
+        (PDataclassNested, PDataclassNestedBar),
     ],
 )
 def test_nested_object(config_class, config_class_nested):
@@ -219,7 +219,7 @@ class AttrsFoo:
 
 
 @dataclass
-class AttrsConfigDelimiter:
+class AttrsDelimiter:
     foo: AttrsFoo
 
 
@@ -234,7 +234,7 @@ class DataclassFoo:
 
 
 @dataclass
-class DataclassConfigDelimiter:
+class DataclassDelimiter:
     foo: DataclassFoo
 
 
@@ -246,7 +246,7 @@ class MsgspecFoo(Struct):
     bar: MsgspecBar
 
 
-class MsgspecConfigDelimiter(Struct):
+class MsgspecDelimiter(Struct):
     foo: MsgspecFoo
 
 
@@ -258,7 +258,7 @@ class PydanticFoo(BaseModel):
     bar: PydanticBar
 
 
-class PydanticConfigDelimiter(BaseModel):
+class PydanticDelimiter(BaseModel):
     foo: PydanticFoo
 
 
@@ -273,18 +273,18 @@ class PydanticFooDataclass:
 
 
 @dataclass
-class PydanticConfigDelimiterDataclass:
+class PydanticDelimiterDataclass:
     foo: PydanticFooDataclass
 
 
 @pytest.mark.parametrize(
     "config_class, foo, bar",
     [
-        (AttrsConfigDelimiter, AttrsFoo, AttrsBar),
-        (DataclassConfigDelimiter, DataclassFoo, DataclassBar),
-        (MsgspecConfigDelimiter, MsgspecFoo, MsgspecBar),
-        (PydanticConfigDelimiter, PydanticFoo, PydanticBar),
-        (PydanticConfigDelimiterDataclass, PydanticFooDataclass, PydanticBarDataclass),
+        (AttrsDelimiter, AttrsFoo, AttrsBar),
+        (DataclassDelimiter, DataclassFoo, DataclassBar),
+        (MsgspecDelimiter, MsgspecFoo, MsgspecBar),
+        (PydanticDelimiter, PydanticFoo, PydanticBar),
+        (PydanticDelimiterDataclass, PydanticFooDataclass, PydanticBarDataclass),
     ],
 )
 def test_nested_delimiter(config_class, foo, bar):
@@ -294,33 +294,33 @@ def test_nested_delimiter(config_class, foo, bar):
 
 
 @attr_dataclass
-class AttrConfigNonEnvFields:
+class AttrNonEnvFields:
     value1: Annotated[int, Env("VALUE")]
     value2: str = "foo"
     value3: List[str] = attr_field(default=["foo"])
 
 
 @dataclass
-class DataclassConfigNonEnvFields:
+class DataclassNonEnvFields:
     value1: Annotated[int, Env("VALUE")]
     value2: str = "foo"
     value3: List[str] = dataclass_field(default_factory=lambda: ["foo"])
 
 
-class MsgspecConfigNonEnvFields(Struct):
+class MsgspecNonEnvFields(Struct):
     value1: Annotated[int, Env("VALUE")]
     value2: str = "foo"
     value3: List[str] = msgspec_field(default_factory=lambda: ["foo"])
 
 
-class PydanticConfigNonEnvFields(BaseModel):
+class PydanticNonEnvFields(BaseModel):
     value1: Annotated[int, Env("VALUE")]
     value2: str = "foo"
     value3: List[str] = ["foo"]
 
 
 @pydantic_dataclass
-class PDataclassConfigNonEnvFields:
+class PDataclassNonEnvFields:
     value1: Annotated[int, Env("VALUE")]
     value2: str = "foo"
     value3: List[str] = dataclass_field(default_factory=lambda: ["foo"])
@@ -329,11 +329,11 @@ class PDataclassConfigNonEnvFields:
 @pytest.mark.parametrize(
     "config_class",
     [
-        AttrConfigNonEnvFields,
-        DataclassConfigNonEnvFields,
-        MsgspecConfigNonEnvFields,
-        PydanticConfigNonEnvFields,
-        PDataclassConfigNonEnvFields,
+        AttrNonEnvFields,
+        DataclassNonEnvFields,
+        MsgspecNonEnvFields,
+        PydanticNonEnvFields,
+        PDataclassNonEnvFields,
     ],
 )
 def test_ignore_non_env_fields(config_class):
