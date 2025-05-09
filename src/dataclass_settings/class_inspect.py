@@ -113,10 +113,7 @@ class MsgspecField(Field):
             annotation = get_type(type_hints[f.name])
             annotation, args = get_annotation_args(annotation)
 
-            def splat_mapper(**value):
-                return msgspec.convert(value, annotation)
-
-            mapper = splat_mapper if detect(annotation) else annotation
+            mapper = cls.splat_mapper(annotation) if detect(annotation) else annotation
 
             field = cls(
                 name=f.name,
@@ -126,6 +123,15 @@ class MsgspecField(Field):
             )
             fields.append(field)
         return fields
+
+    @staticmethod
+    def splat_mapper(annotation):
+        import msgspec
+
+        def convert(**value):
+            return msgspec.convert(value, annotation)
+
+        return convert
 
 
 @dataclasses.dataclass
