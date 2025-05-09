@@ -501,15 +501,46 @@ def test_union_of_supportable_class_types(config_class):
         load_settings(config_class)
 
 
-def test_partial():
-    my_secret = Secret.partial(dir="/foo/bar")
+my_secret = Secret.partial(dir="/foo/bar")
 
-    class Config(BaseModel):
-        foo: Annotated[str, my_secret("foo")]
 
+@attr_dataclass
+class AttrsPartial:
+    foo: Annotated[str, my_secret("foo")]
+
+
+@dataclass
+class DataclassPartial:
+    foo: Annotated[str, my_secret("foo")]
+
+
+class MsgspecPartial(Struct):
+    foo: Annotated[str, my_secret("foo")]
+
+
+class PydanticPartial(BaseModel):
+    foo: Annotated[str, my_secret("foo")]
+
+
+@pydantic_dataclass
+class PDataclassPartial:
+    foo: Annotated[str, my_secret("foo")]
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsPartial,
+        DataclassPartial,
+        MsgspecPartial,
+        PydanticPartial,
+        PDataclassPartial,
+    ],
+)
+def test_partial(config_class):
     with env_setup(files={"/foo/bar/foo": "one"}):
-        config = load_settings(Config)
-    assert config == Config(foo="one")
+        config = load_settings(config_class)
+    assert config == config_class(foo="one")
 
 
 def test_infer_name():
