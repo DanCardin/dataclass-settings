@@ -45,6 +45,7 @@ class PDataclassMissingRequired:
     ]
 
 
+@skip_under(3, 11, reason="Requires tomllib")
 @pytest.mark.parametrize(
     "config_class, exc_class",
     [

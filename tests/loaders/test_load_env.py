@@ -552,15 +552,16 @@ class PydanticInferNameDataclass:
         (AttrsInferName, AttrsFooInfer),
         (DataclassInferName, DataclassFooInfer),
         (MsgspecInferName, MsgspecFooInfer),
-        (PydanticInferName, PydanticFooInfer),
-        (PydanticInferNameDataclass, PydanticInferNameDataclass),
+        (PydanticInferName, dict),
+        (PydanticInferNameDataclass, dict),
     ],
 )
 def test_infer_name(config_class, config_infer_name):
     with env_setup({"BAR": "2", "FOO_NESTED": "nest!"}):
         config = load_settings(config_class, nested_delimiter="_", infer_names=True)
 
-    assert config == config_class(bar=2, foo=config_infer_name(nested="nest!"))
+    expected_result = config_class(bar=2, foo=config_infer_name(nested="nest!"))
+    assert config == expected_result
 
 
 @attr_dataclass
@@ -658,17 +659,17 @@ class PydanticLoadErrorDataclass:
 
 
 @pytest.mark.parametrize(
-    "config_class",
+    "config_class, error_cls",
     [
-        AttrsLoadError,
-        DataclassLoadError,
-        MsgspecLoadError,
-        PydanticLoadError,
-        PydanticLoadErrorDataclass,
+        (AttrsLoadError, TypeError),
+        (DataclassLoadError, TypeError),
+        (MsgspecLoadError, TypeError),
+        (PydanticLoadError, ValidationError),
+        (PydanticLoadErrorDataclass, ValidationError),
     ],
 )
-def test_setting_load_error(caplog, config_class):
-    with env_setup({"BAR": "one"}), pytest.raises(ValidationError):
+def test_setting_load_error(caplog, config_class, error_cls):
+    with env_setup({"BAR": "one"}), pytest.raises(error_cls):
         load_settings(config_class, infer_names=True, emit_history=True)
 
     message = caplog.messages[0]

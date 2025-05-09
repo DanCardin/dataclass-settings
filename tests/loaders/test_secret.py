@@ -600,8 +600,8 @@ class PydanticInferNameDataclass:
         (AttrsInferName, AttrsFooInfer),
         (DataclassInferName, DataclassFooInfer),
         (MsgspecInferName, MsgspecFooInfer),
-        (PydanticInferName, PydanticFooInfer),
-        (PydanticInferNameDataclass, PydanticInferNameDataclass),
+        (PydanticInferName, dict),
+        (PydanticInferNameDataclass, dict),
     ],
 )
 def test_infer_name(config_class, config_infer_name):

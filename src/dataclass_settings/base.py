@@ -82,7 +82,7 @@ def collect(
     for field in class_inspect.fields(source_cls):
         field_context = context.enter(field.name)
 
-        value: str | None | dict[str, Any] = None
+        value: str | dict[str, Any] | None = None
 
         nested_type = field.get_nested_type()
         if nested_type:
