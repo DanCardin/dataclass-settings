@@ -117,17 +117,83 @@ def test_fallback(config_class):
     assert config == config_class(foo=1, default="3")
 
 
-def test_nested_object():
-    class Bar(BaseModel):
-        value: Annotated[str, Secret("value")]
-        meow: Annotated[str, Secret("meow")] = "meow"
-        default: Annotated[str, Secret("meow", "uhh")] = Field(default="ok")
+@attr_dataclass
+class AttrNestedBar:
+    value: Annotated[str, Secret("value")]
+    meow: Annotated[str, Secret("meow")] = "meow"
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
 
-    class Config(BaseModel):
-        foo: Annotated[int, Secret("foo")]
-        bar: Bar
-        ignoreme: str = "asdf"
 
+@attr_dataclass
+class AttrNested:
+    foo: Annotated[int, Secret("foo")]
+    bar: AttrNestedBar
+    ignoreme: str = "asdf"
+
+
+@dataclass
+class DataclassNestedBar:
+    value: Annotated[str, Secret("value")]
+    meow: Annotated[str, Secret("meow")] = "meow"
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
+
+
+@dataclass
+class DataclassNested:
+    foo: Annotated[int, Secret("foo")]
+    bar: DataclassNestedBar
+    ignoreme: str = "asdf"
+
+
+class MsgspecNestedBar(Struct):
+    value: Annotated[str, Secret("value")]
+    meow: Annotated[str, Secret("meow")] = "meow"
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
+
+
+class MsgspecNested(Struct):
+    foo: Annotated[int, Secret("foo")]
+    bar: MsgspecNestedBar
+    ignoreme: str = "asdf"
+
+
+class PydanticNestedBar(BaseModel):
+    value: Annotated[str, Secret("value")]
+    meow: Annotated[str, Secret("meow")] = "meow"
+    default: Annotated[str, Secret("meow", "uhh")] = Field(default="ok")
+
+
+class PydanticNested(BaseModel):
+    foo: Annotated[int, Secret("foo")]
+    bar: PydanticNestedBar
+    ignoreme: str = "asdf"
+
+
+@pydantic_dataclass
+class PDataclassNestedBar:
+    value: Annotated[str, Secret("value")]
+    meow: Annotated[str, Secret("meow")] = "meow"
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
+
+
+@pydantic_dataclass
+class PDataclassNested:
+    foo: Annotated[int, Secret("foo")]
+    bar: PDataclassNestedBar
+    ignoreme: str = "asdf"
+
+
+@pytest.mark.parametrize(
+    "config_class, config_class_nested",
+    [
+        (AttrNested, AttrNestedBar),
+        (DataclassNested, DataclassNestedBar),
+        (MsgspecNested, MsgspecNestedBar),
+        (PydanticNested, PydanticNestedBar),
+        (PDataclassNested, PDataclassNestedBar),
+    ],
+)
+def test_nested_object(config_class, config_class_nested):
     with env_setup(
         files={
             "/run/secrets/foo": "1",
@@ -135,10 +201,12 @@ def test_nested_object():
             "/run/secrets/uhh": "3",
         }
     ):
-        config = load_settings(Config)
+        config = load_settings(config_class)
 
-    assert config == Config(
-        foo=1, bar=Bar(value="two", meow="meow", default="3"), ignoreme="asdf"
+    assert config == config_class(
+        foo=1,
+        bar=config_class_nested(value="two", meow="meow", default="3"),
+        ignoreme="asdf",
     )
 
 
