@@ -72,15 +72,49 @@ def test_has_required_required(config_class):
     assert config == config_class(foo=1, ignoreme="asdf")
 
 
-def test_fallback():
-    class Config(BaseModel):
-        foo: Annotated[int, Secret("foo")]
-        default: Annotated[str, Secret("meow", "uhh")] = Field(default="ok")
+@attr_dataclass
+class AttrFallback:
+    foo: Annotated[int, Secret("foo")]
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
 
+
+@dataclass
+class DataclassFallback:
+    foo: Annotated[int, Secret("foo")]
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
+
+
+class MsgspecFallback(Struct):
+    foo: Annotated[int, Secret("foo")]
+    default: Annotated[str, Secret("meow", "uhh")] = "ok"
+
+
+class PydanticFallback(BaseModel):
+    foo: Annotated[int, Secret("foo")]
+    default: Annotated[str, Secret("meow", "uhh")] = Field(default="ok")
+
+
+@pydantic_dataclass
+class PDataclassFallback:
+    foo: Annotated[int, Secret("foo")]
+    default: Annotated[str, Secret("meow", "uhh")] = Field(default="ok")
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrFallback,
+        DataclassFallback,
+        MsgspecFallback,
+        PydanticFallback,
+        PDataclassFallback,
+    ],
+)
+def test_fallback(config_class):
     with env_setup(files={"/run/secrets/foo": "1", "/run/secrets/uhh": "3"}):
-        config = load_settings(Config)
+        config = load_settings(config_class)
 
-    assert config == Config(foo=1, default="3")
+    assert config == config_class(foo=1, default="3")
 
 
 def test_nested_object():
