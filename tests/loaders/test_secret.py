@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import List, Union
 
 import pytest
 from attr import dataclass as attr_dataclass
+from attrs import field as attr_field
 from msgspec import Struct
+from msgspec import field as msgspec_field
 from pydantic import BaseModel, Field, ValidationError
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from typing_extensions import Annotated
@@ -296,16 +299,54 @@ def test_nested_delimiter(config_class, foo, bar):
     assert config == config_class(foo=foo(bar=bar(value=15)))
 
 
-def test_ignore_non_env_fields():
-    class Config(BaseModel):
-        value1: Annotated[int, Secret("value")]
-        value2: str = "foo"
-        value3: List[str] = ["foo"]
+@attr_dataclass
+class AttrNonEnvFields:
+    value1: Annotated[int, Secret("value")]
+    value2: str = "foo"
+    value3: List[str] = attr_field(default=["foo"])
 
+
+@dataclass
+class DataclassNonEnvFields:
+    value1: Annotated[int, Secret("value")]
+    value2: str = "foo"
+    value3: List[str] = dataclass_field(default_factory=lambda: ["foo"])
+
+
+class MsgspecNonEnvFields(Struct):
+    value1: Annotated[int, Secret("value")]
+    value2: str = "foo"
+    value3: List[str] = msgspec_field(default_factory=lambda: ["foo"])
+
+
+class PydanticNonEnvFields(BaseModel):
+    value1: Annotated[int, Secret("value")]
+    value2: str = "foo"
+    value3: List[str] = ["foo"]
+
+
+@pydantic_dataclass
+class PDataclassNonEnvFields:
+    value1: Annotated[int, Secret("value")]
+    value2: str = "foo"
+    value3: List[str] = dataclass_field(default_factory=lambda: ["foo"])
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrNonEnvFields,
+        DataclassNonEnvFields,
+        MsgspecNonEnvFields,
+        PydanticNonEnvFields,
+        PDataclassNonEnvFields,
+    ],
+)
+def test_ignore_non_env_fields(config_class):
     with env_setup(files={"/run/secrets/value": "15"}):
-        config = load_settings(Config, nested_delimiter="__")
+        config = load_settings(config_class, nested_delimiter="__")
 
-    assert config == Config(value1=15, value2="foo", value3=["foo"])
+    assert config == config_class(value1=15, value2="foo", value3=["foo"])
 
 
 def test_optional_nested_object():
