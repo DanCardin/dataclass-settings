@@ -13,63 +13,46 @@ from tests.utils import env_setup, skip_under
 
 
 @attr_dataclass
-class AttrRequired:
-    foo: Annotated[
-        int,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
-        ),
+class AttrMissingRequired:
+    asdf: Annotated[
+        str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "asdf")
     ]
 
 
 @dataclass
-class DataclassRequired:
-    foo: Annotated[
-        int,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
-        ),
+class DataclassMissingRequired:
+    asdf: Annotated[
+        str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "asdf")
     ]
 
 
-class MsgspecRequired(Struct):
-    foo: Annotated[
-        int,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
-        ),
+class MsgspecMissingRequired(Struct):
+    asdf: Annotated[
+        str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "asdf")
     ]
 
 
-class PydanticRequired(BaseModel):
-    foo: Annotated[
-        int,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.asdf",
-        ),
+class PydanticMissingRequired(BaseModel):
+    asdf: Annotated[
+        str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "asdf")
     ]
 
 
 @pydantic_dataclass
-class PDataclassRequired:
-    foo: Annotated[
-        int,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.asdf",
-        ),
+class PDataclassMissingRequired:
+    asdf: Annotated[
+        str, Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "asdf")
     ]
 
 
 @pytest.mark.parametrize(
     "config_class, exc_class",
     [
-        (AttrRequired, TypeError),
-        (DataclassRequired, TypeError),
-        (MsgspecRequired, TypeError),
-        (PydanticRequired, ValidationError),
-        (PDataclassRequired, ValidationError),
+        (AttrMissingRequired, TypeError),
+        (DataclassMissingRequired, TypeError),
+        (MsgspecMissingRequired, TypeError),
+        (PydanticMissingRequired, ValidationError),
+        (PDataclassMissingRequired, ValidationError),
     ],
 )
 def test_missing_required(config_class, exc_class):
@@ -77,27 +60,110 @@ def test_missing_required(config_class, exc_class):
         load_settings(config_class)
 
 
-@skip_under(3, 11, reason="Requires tomllib")
-def test_has_required_required():
-    class Config(BaseModel):
-        foo: Annotated[
-            str,
-            Toml(
-                Path(__file__).parent.parent.parent / "pyproject.toml",
-                "tool.poetry.name",
-            ),
-        ]
-        license: Annotated[
-            str,
-            Toml(
-                Path(__file__).parent.parent.parent / "pyproject.toml",
-                "tool.poetry.license",
-            ),
-        ]
-        ignoreme: str = "asdf"
+@attr_dataclass
+class AttrRequired:
+    foo: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
+        ),
+    ]
+    license: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.license",
+        ),
+    ]
+    ignoreme: str = "asdf"
 
-    config = load_settings(Config)
-    assert config == Config(
+
+@dataclass
+class DataclassRequired:
+    foo: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
+        ),
+    ]
+    license: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.license",
+        ),
+    ]
+    ignoreme: str = "asdf"
+
+
+class MsgspecRequired(Struct):
+    foo: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
+        ),
+    ]
+    license: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.license",
+        ),
+    ]
+    ignoreme: str = "asdf"
+
+
+class PydanticRequired(BaseModel):
+    foo: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.name",
+        ),
+    ]
+    license: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.license",
+        ),
+    ]
+    ignoreme: str = "asdf"
+
+
+@pydantic_dataclass
+class PDataclassRequired:
+    foo: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.name",
+        ),
+    ]
+    license: Annotated[
+        str,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.license",
+        ),
+    ]
+    ignoreme: str = "asdf"
+
+
+@skip_under(3, 11, reason="Requires tomllib")
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrRequired,
+        DataclassRequired,
+        MsgspecRequired,
+        PydanticRequired,
+        PDataclassRequired,
+    ],
+)
+def test_has_required_required(config_class):
+    config = load_settings(config_class)
+    assert config == config_class(
         foo="dataclass-settings", ignoreme="asdf", license="Apache-2.0"
     )
 
