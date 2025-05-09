@@ -349,17 +349,67 @@ def test_ignore_non_env_fields(config_class):
     assert config == config_class(value1=15, value2="foo", value3=["foo"])
 
 
-def test_optional_nested_object():
-    class Foo(BaseModel):
-        value: Annotated[int, Secret("value")]
+@attr_dataclass
+class AttrOptionalNestedFoo:
+    value: Annotated[int, Secret("value")]
 
-    class Config(BaseModel):
-        foo: Union[Foo, None] = None
 
+@attr_dataclass
+class AttrOptionalNested:
+    foo: Union[AttrOptionalNestedFoo, None] = None
+
+
+@dataclass
+class DataclassOptionalNestedFoo:
+    value: Annotated[int, Secret("value")]
+
+
+@dataclass
+class DataclassOptionalNested:
+    foo: Union[DataclassOptionalNestedFoo, None] = None
+
+
+class MsgspecOptionalNestedFoo(Struct):
+    value: Annotated[int, Secret("value")]
+
+
+class MsgspecOptionalNested(Struct):
+    foo: Union[MsgspecOptionalNestedFoo, None] = None
+
+
+class PydanticOptionalNestedFoo(BaseModel):
+    value: Annotated[int, Secret("value")]
+
+
+class PydanticOptionalNested(BaseModel):
+    foo: Union[PydanticOptionalNestedFoo, None] = None
+
+
+@pydantic_dataclass
+class PDataclassOptionalNestedFoo:
+    value: Annotated[int, Secret("value")]
+
+
+@pydantic_dataclass
+class PDataclassOptionalNested:
+    foo: Union[PDataclassOptionalNestedFoo, None] = None
+
+
+@pytest.mark.parametrize(
+    "config_class, config_class_nested",
+    [
+        (AttrOptionalNested, AttrOptionalNestedFoo),
+        (DataclassOptionalNested, DataclassOptionalNestedFoo),
+        (MsgspecOptionalNested, MsgspecOptionalNestedFoo),
+        (PydanticOptionalNested, PydanticOptionalNestedFoo),
+        (PDataclassOptionalNested, PDataclassOptionalNestedFoo),
+    ],
+)
+def test_optional_nested_object(config_class, config_class_nested):
     with env_setup():
-        config = load_settings(Config, nested_delimiter="__")
+        config = load_settings(config_class, nested_delimiter="__")
 
-    assert config == Config(foo=None)
+    assert config == config_class(foo=None)
 
 
 def test_arbitrary_annotation_skipped():
