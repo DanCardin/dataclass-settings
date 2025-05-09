@@ -606,16 +606,70 @@ def test_missing_infer_name_or_env_var(config_class):
     )
 
 
-def test_setting_load_error(caplog):
-    class Foo(BaseModel):
-        nested: Annotated[str, Env()]
-        bar: Annotated[str, Env()]
+@attr_dataclass
+class AttrsFooError:
+    nested: Annotated[str, Env()]
+    bar: Annotated[str, Env()]
 
-    class Config(BaseModel):
-        foo: Foo
 
+@attr_dataclass
+class AttrsLoadError:
+    foo: AttrsFooError
+
+
+@dataclass
+class DataclassFooError:
+    nested: Annotated[str, Env()]
+    bar: Annotated[str, Env()]
+
+
+@dataclass
+class DataclassLoadError:
+    foo: DataclassFooError
+
+
+class MsgspecFooError(Struct):
+    nested: Annotated[str, Env()]
+    bar: Annotated[str, Env()]
+
+
+class MsgspecLoadError(Struct):
+    foo: MsgspecFooError
+
+
+class PydanticFooError(BaseModel):
+    nested: Annotated[str, Env()]
+    bar: Annotated[str, Env()]
+
+
+class PydanticLoadError(BaseModel):
+    foo: PydanticFooError
+
+
+@pydantic_dataclass
+class PydanticFooErrorDataclass:
+    nested: Annotated[str, Env()]
+    bar: Annotated[str, Env()]
+
+
+@pydantic_dataclass
+class PydanticLoadErrorDataclass:
+    foo: PydanticFooErrorDataclass
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsLoadError,
+        DataclassLoadError,
+        MsgspecLoadError,
+        PydanticLoadError,
+        PydanticLoadErrorDataclass,
+    ],
+)
+def test_setting_load_error(caplog, config_class):
     with env_setup({"BAR": "one"}), pytest.raises(ValidationError):
-        load_settings(Config, infer_names=True, emit_history=True)
+        load_settings(config_class, infer_names=True, emit_history=True)
 
     message = caplog.messages[0]
     assert message == textwrap.dedent(
