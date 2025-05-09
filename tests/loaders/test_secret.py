@@ -349,63 +349,44 @@ def test_ignore_non_env_fields(config_class):
     assert config == config_class(value1=15, value2="foo", value3=["foo"])
 
 
-@attr_dataclass
-class AttrOptionalNestedFoo:
+class ArbitraryNestedFoo(BaseModel):
     value: Annotated[int, Secret("value")]
 
 
 @attr_dataclass
 class AttrOptionalNested:
-    foo: Union[AttrOptionalNestedFoo, None] = None
-
-
-@dataclass
-class DataclassOptionalNestedFoo:
-    value: Annotated[int, Secret("value")]
+    foo: Union[ArbitraryNestedFoo, None] = None
 
 
 @dataclass
 class DataclassOptionalNested:
-    foo: Union[DataclassOptionalNestedFoo, None] = None
-
-
-class MsgspecOptionalNestedFoo(Struct):
-    value: Annotated[int, Secret("value")]
+    foo: Union[ArbitraryNestedFoo, None] = None
 
 
 class MsgspecOptionalNested(Struct):
-    foo: Union[MsgspecOptionalNestedFoo, None] = None
-
-
-class PydanticOptionalNestedFoo(BaseModel):
-    value: Annotated[int, Secret("value")]
+    foo: Union[ArbitraryNestedFoo, None] = None
 
 
 class PydanticOptionalNested(BaseModel):
-    foo: Union[PydanticOptionalNestedFoo, None] = None
-
-
-@pydantic_dataclass
-class PDataclassOptionalNestedFoo:
-    value: Annotated[int, Secret("value")]
+    foo: Union[ArbitraryNestedFoo, None] = None
 
 
 @pydantic_dataclass
 class PDataclassOptionalNested:
-    foo: Union[PDataclassOptionalNestedFoo, None] = None
+    foo: Union[ArbitraryNestedFoo, None] = None
 
 
 @pytest.mark.parametrize(
-    "config_class, config_class_nested",
+    "config_class",
     [
-        (AttrOptionalNested, AttrOptionalNestedFoo),
-        (DataclassOptionalNested, DataclassOptionalNestedFoo),
-        (MsgspecOptionalNested, MsgspecOptionalNestedFoo),
-        (PydanticOptionalNested, PydanticOptionalNestedFoo),
-        (PDataclassOptionalNested, PDataclassOptionalNestedFoo),
+        AttrOptionalNested,
+        DataclassOptionalNested,
+        MsgspecOptionalNested,
+        PydanticOptionalNested,
+        PDataclassOptionalNested,
     ],
 )
-def test_optional_nested_object(config_class, config_class_nested):
+def test_optional_nested_object(config_class):
     with env_setup():
         config = load_settings(config_class, nested_delimiter="__")
 

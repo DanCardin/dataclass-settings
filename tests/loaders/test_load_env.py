@@ -343,31 +343,31 @@ def test_ignore_non_env_fields(config_class):
     assert config == config_class(value1=15, value2="foo", value3=["foo"])
 
 
-class Foo(BaseModel):
+class AribitraryNestedFoo(BaseModel):
     value: Annotated[int, Env("VALUE")]
 
 
 @attr_dataclass
 class AttrsOptionalNested:
-    foo: Union[Foo, None] = None
+    foo: Union[AribitraryNestedFoo, None] = None
 
 
 @dataclass
 class DataclassOptionalNested:
-    foo: Union[Foo, None] = None
+    foo: Union[AribitraryNestedFoo, None] = None
 
 
 class MsgspecOptionalNested(Struct):
-    foo: Union[Foo, None] = None
+    foo: Union[AribitraryNestedFoo, None] = None
 
 
 class PydanticOptionalNested(BaseModel):
-    foo: Union[Foo, None] = None
+    foo: Union[AribitraryNestedFoo, None] = None
 
 
 @pydantic_dataclass
 class PydanticOptionalNestedDataclass:
-    foo: Union[Foo, None] = None
+    foo: Union[AribitraryNestedFoo, None] = None
 
 
 @pytest.mark.parametrize(
