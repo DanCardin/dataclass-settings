@@ -495,18 +495,72 @@ def test_union_of_supportable_class_types(config_class):
         load_settings(config_class)
 
 
-def test_infer_name():
-    class Foo(BaseModel):
-        nested: Annotated[str, Env()]
+@attr_dataclass
+class AttrsFooInfer:
+    nested: Annotated[str, Env()]
 
-    class Config(BaseModel):
-        foo: Foo
-        bar: Annotated[int, Env()]
 
+@attr_dataclass
+class AttrsInferName:
+    foo: AttrsFooInfer
+    bar: Annotated[int, Env()]
+
+
+@dataclass
+class DataclassFooInfer:
+    nested: Annotated[str, Env()]
+
+
+@dataclass
+class DataclassInferName:
+    foo: DataclassFooInfer
+    bar: Annotated[int, Env()]
+
+
+class MsgspecFooInfer(Struct):
+    nested: Annotated[str, Env()]
+
+
+class MsgspecInferName(Struct):
+    foo: MsgspecFooInfer
+    bar: Annotated[int, Env()]
+
+
+class PydanticFooInfer(BaseModel):
+    nested: Annotated[str, Env()]
+
+
+class PydanticInferName(BaseModel):
+    foo: PydanticFooInfer
+    bar: Annotated[int, Env()]
+
+
+@pydantic_dataclass
+class PydanticFooInferDataclass:
+    nested: Annotated[str, Env()]
+
+
+@pydantic_dataclass
+class PydanticInferNameDataclass:
+    foo: PydanticFooInferDataclass
+    bar: Annotated[int, Env()]
+
+
+@pytest.mark.parametrize(
+    "config_class, config_infer_name",
+    [
+        (AttrsInferName, AttrsFooInfer),
+        (DataclassInferName, DataclassFooInfer),
+        (MsgspecInferName, MsgspecFooInfer),
+        (PydanticInferName, PydanticFooInfer),
+        (PydanticInferNameDataclass, PydanticInferNameDataclass),
+    ],
+)
+def test_infer_name(config_class, config_infer_name):
     with env_setup({"BAR": "2", "FOO_NESTED": "nest!"}):
-        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+        config = load_settings(config_class, nested_delimiter="_", infer_names=True)
 
-    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+    assert config == config_class(bar=2, foo=config_infer_name(nested="nest!"))
 
 
 def test_missing_infer_name_or_env_var():
