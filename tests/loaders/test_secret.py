@@ -17,7 +17,7 @@ from tests.utils import env_setup
 
 @attr_dataclass
 class AttrRequired:
-    foo: Annotated[int, Secret("FOO")]
+    foo: Annotated[int, Secret("foo")]
     ignoreme: str = "asdf"
 
 
@@ -28,7 +28,7 @@ class DataclassRequired:
 
 
 class MsgspecRequired(Struct):
-    foo: Annotated[int, Secret("FOO")]
+    foo: Annotated[int, Secret("foo")]
     ignoreme: str = "asdf"
 
 
@@ -39,7 +39,7 @@ class PydanticRequired(BaseModel):
 
 @pydantic_dataclass
 class PDataclassRequired:
-    foo: Annotated[int, Secret("FOO")]
+    foo: Annotated[int, Secret("foo")]
     ignoreme: str = "asdf"
 
 
