@@ -433,16 +433,72 @@ def test_arbitrary_annotation_skipped(config_class):
     assert config == config_class()
 
 
-def test_union_of_supportable_class_types():
-    class Foo(BaseModel): ...
+@attr_dataclass
+class AttrsFooU: ...
 
-    class Bar(BaseModel): ...
 
-    class Config(BaseModel):
-        foo: Union[Foo, Bar]
+@attr_dataclass
+class AttrsBarU: ...
 
+
+@attr_dataclass
+class AttrsUnion:
+    foo: Union[AttrsFooU, AttrsBarU]
+
+
+@dataclass
+class DataclassFooU: ...
+
+
+@dataclass
+class DataclassBarU: ...
+
+
+@dataclass
+class DataclassUnion:
+    foo: Union[DataclassFooU, DataclassBarU]
+
+
+class MsgspecFooU(Struct): ...
+
+
+class MsgspecBarU(Struct): ...
+
+
+class MsgspecUnion(Struct):
+    foo: Union[MsgspecFooU, MsgspecBarU]
+
+
+class PydanticFooU(BaseModel): ...
+
+
+class PydanticBarU(BaseModel): ...
+
+
+class PydanticUnion(BaseModel):
+    foo: Union[PydanticFooU, PydanticBarU]
+
+
+@pydantic_dataclass
+class PDataclassFooU: ...
+
+
+@pydantic_dataclass
+class PDataclassBarU: ...
+
+
+@pydantic_dataclass
+class PDataclassUnion:
+    foo: Union[PDataclassFooU, PDataclassBarU]
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [AttrsUnion, DataclassUnion, MsgspecUnion, PydanticUnion, PDataclassUnion],
+)
+def test_union_of_supportable_class_types(config_class):
     with env_setup(), pytest.raises(ValueError):
-        load_settings(Config)
+        load_settings(config_class)
 
 
 def test_partial():
