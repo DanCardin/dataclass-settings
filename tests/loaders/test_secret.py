@@ -393,14 +393,44 @@ def test_optional_nested_object(config_class):
     assert config == config_class(foo=None)
 
 
-def test_arbitrary_annotation_skipped():
-    class Config(BaseModel):
-        foo: Annotated[str, ""] = ""
+@attr_dataclass
+class AttrsAnnotationSkipped:
+    foo: Annotated[str, ""] = ""
 
+
+@dataclass
+class DataclassAnnotationSkipped:
+    foo: Annotated[str, ""] = ""
+
+
+class MsgspecAnnotationSkipped(Struct):
+    foo: Annotated[str, ""] = ""
+
+
+class PydanticAnnotationSkipped(BaseModel):
+    foo: Annotated[str, ""] = ""
+
+
+@pydantic_dataclass
+class PydanticAnnotationSkippedDataclass:
+    foo: Annotated[str, ""] = ""
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsAnnotationSkipped,
+        DataclassAnnotationSkipped,
+        MsgspecAnnotationSkipped,
+        PydanticAnnotationSkipped,
+        PydanticAnnotationSkippedDataclass,
+    ],
+)
+def test_arbitrary_annotation_skipped(config_class):
     with env_setup():
-        config = load_settings(Config)
+        config = load_settings(config_class)
 
-    assert config == Config()
+    assert config == config_class()
 
 
 def test_union_of_supportable_class_types():
