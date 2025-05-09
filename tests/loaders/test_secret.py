@@ -1,30 +1,75 @@
+from dataclasses import dataclass
 from typing import List, Union
 
 import pytest
+from attr import dataclass as attr_dataclass
+from msgspec import Struct
 from pydantic import BaseModel, Field, ValidationError
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 from typing_extensions import Annotated
 
 from dataclass_settings import Secret, load_settings
 from tests.utils import env_setup
 
 
-def test_missing_required():
-    class Config(BaseModel):
-        foo: Annotated[int, Secret("foo")]
-
-    with env_setup(), pytest.raises(ValidationError):
-        load_settings(Config)
+@attr_dataclass
+class AttrRequired:
+    foo: Annotated[int, Secret("FOO")]
+    ignoreme: str = "asdf"
 
 
-def test_has_required_required():
-    class Config(BaseModel):
-        foo: Annotated[int, Secret("foo")]
-        ignoreme: str = "asdf"
+@dataclass
+class DataclassRequired:
+    foo: Annotated[int, Secret("foo")]
+    ignoreme: str = "asdf"
 
+
+class MsgspecRequired(Struct):
+    foo: Annotated[int, Secret("FOO")]
+    ignoreme: str = "asdf"
+
+
+class PydanticRequired(BaseModel):
+    foo: Annotated[int, Secret("foo")]
+    ignoreme: str = "asdf"
+
+
+@pydantic_dataclass
+class PDataclassRequired:
+    foo: Annotated[int, Secret("FOO")]
+    ignoreme: str = "asdf"
+
+
+@pytest.mark.parametrize(
+    "config_class, exc_class",
+    [
+        (AttrRequired, TypeError),
+        (DataclassRequired, TypeError),
+        (MsgspecRequired, TypeError),
+        (PydanticRequired, ValidationError),
+        (PDataclassRequired, ValidationError),
+    ],
+)
+def test_missing_required(config_class, exc_class):
+    with env_setup(), pytest.raises(exc_class):
+        load_settings(config_class)
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrRequired,
+        DataclassRequired,
+        MsgspecRequired,
+        PydanticRequired,
+        PDataclassRequired,
+    ],
+)
+def test_has_required_required(config_class):
     with env_setup(files={"/run/secrets/foo": "1"}):
-        config = load_settings(Config)
+        config = load_settings(config_class)
 
-    assert config == Config(foo=1, ignoreme="asdf")
+    assert config == config_class(foo=1, ignoreme="asdf")
 
 
 def test_fallback():
