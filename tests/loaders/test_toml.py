@@ -168,16 +168,48 @@ def test_has_required_required(config_class):
     )
 
 
-@skip_under(3, 11, reason="Requires tomllib")
-def test_missing_optional_inferred_name():
-    class Config(BaseModel):
-        tool: Annotated[
-            int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")
-        ]
-        ignoreme: str = "asdf"
+@attr_dataclass
+class AttrMissingOptionelInferred:
+    tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
+    ignoreme: str = "asdf"
 
+
+@dataclass
+class DataclassMissingOptionelInferred:
+    tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
+    ignoreme: str = "asdf"
+
+
+class MsgspecMissingOptionelInferred(Struct):
+    tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
+    ignoreme: str = "asdf"
+
+
+class PydanticMissingOptionelInferred(BaseModel):
+    tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
+    ignoreme: str = "asdf"
+
+
+@pydantic_dataclass
+class PDataclassMissingOptionelInferred:
+    tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
+    ignoreme: str = "asdf"
+
+
+@skip_under(3, 11, reason="Requires tomllib")
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrMissingOptionelInferred,
+        DataclassMissingOptionelInferred,
+        MsgspecMissingOptionelInferred,
+        PydanticMissingOptionelInferred,
+        PDataclassMissingOptionelInferred,
+    ],
+)
+def test_missing_optional_inferred_name(config_class):
     with pytest.raises(ValueError) as e:
-        load_settings(Config)
+        load_settings(config_class)
     assert (
         str(e.value)
         == "Toml instance for `tool` supplies no `key` and `infer_names` is enabled"
