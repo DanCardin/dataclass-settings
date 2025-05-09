@@ -20,7 +20,7 @@ class Loader(Protocol):
 
     @classmethod
     def partial(cls, **kwargs):
-        return partial(cls, **kwargs)  # type: ignore
+        return partial(cls, **kwargs)
 
     def load(self, context: Context) -> Any:
         assert_never()  # type: ignore
