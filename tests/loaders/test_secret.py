@@ -611,12 +611,42 @@ def test_infer_name(config_class, config_infer_name):
     assert config == config_class(bar=2, foo=config_infer_name(nested="nest!"))
 
 
-def test_missing_infer_name_or_env_var():
-    class Config(BaseModel):
-        bar: Annotated[int, Secret()]
+@attr_dataclass
+class AttrsMissingInfer:
+    bar: Annotated[int, Secret()]
 
+
+@dataclass
+class DataclassMissingInfer:
+    bar: Annotated[int, Secret()]
+
+
+class MsgspecMissingInfer(Struct):
+    bar: Annotated[int, Secret()]
+
+
+class PydanticMissingInfer(BaseModel):
+    bar: Annotated[int, Secret()]
+
+
+@pydantic_dataclass
+class PydanticMissingInferDataclass:
+    bar: Annotated[int, Secret()]
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsMissingInfer,
+        DataclassMissingInfer,
+        MsgspecMissingInfer,
+        PydanticMissingInfer,
+        PydanticMissingInferDataclass,
+    ],
+)
+def test_missing_infer_name_or_env_var(config_class):
     with env_setup(), pytest.raises(ValueError) as e:
-        load_settings(Config)
+        load_settings(config_class)
 
     assert (
         str(e.value)
