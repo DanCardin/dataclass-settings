@@ -1,27 +1,80 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from attr import dataclass as attr_dataclass
 from msgspec import Struct
 from pydantic import BaseModel, ValidationError
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 from typing_extensions import Annotated
 
 from dataclass_settings import Toml, load_settings
 from tests.utils import env_setup, skip_under
 
 
-@skip_under(3, 11, reason="Requires tomllib")
-def test_missing_required():
-    class Config(BaseModel):
-        foo: Annotated[
-            int,
-            Toml(
-                Path(__file__).parent.parent.parent / "pyproject.toml",
-                "tool.poetry.asdf",
-            ),
-        ]
+@attr_dataclass
+class AttrRequired:
+    foo: Annotated[
+        int,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
+        ),
+    ]
 
-    with env_setup({}), pytest.raises(ValidationError):
-        load_settings(Config)
+
+@dataclass
+class DataclassRequired:
+    foo: Annotated[
+        int,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
+        ),
+    ]
+
+
+class MsgspecRequired(Struct):
+    foo: Annotated[
+        int,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.asdf"
+        ),
+    ]
+
+
+class PydanticRequired(BaseModel):
+    foo: Annotated[
+        int,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.asdf",
+        ),
+    ]
+
+
+@pydantic_dataclass
+class PDataclassRequired:
+    foo: Annotated[
+        int,
+        Toml(
+            Path(__file__).parent.parent.parent / "pyproject.toml",
+            "tool.poetry.asdf",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "config_class, exc_class",
+    [
+        (AttrRequired, TypeError),
+        (DataclassRequired, TypeError),
+        (MsgspecRequired, TypeError),
+        (PydanticRequired, ValidationError),
+        (PDataclassRequired, ValidationError),
+    ],
+)
+def test_missing_required(config_class, exc_class):
+    with env_setup({}), pytest.raises(exc_class):
+        load_settings(config_class)
 
 
 @skip_under(3, 11, reason="Requires tomllib")
