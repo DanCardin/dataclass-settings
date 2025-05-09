@@ -17,29 +17,29 @@ from tests.utils import env_setup
 
 
 @attr_dataclass
-class AttrConfig:
+class AttrConfigRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
 @dataclass
-class DataclassConfig:
+class DataclassConfigRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
-class MsgspecConfig(Struct):
+class MsgspecConfigRequired(Struct):
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
-class PydanticConfig(BaseModel):
+class PydanticConfigRequired(BaseModel):
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
 
 @pydantic_dataclass
-class PDataclassConfig:
+class PDataclassConfigRequired:
     foo: Annotated[int, Env("FOO")]
     ignoreme: str = "asdf"
 
@@ -47,11 +47,11 @@ class PDataclassConfig:
 @pytest.mark.parametrize(
     "config_class, exc_class",
     [
-        (AttrConfig, TypeError),
-        (DataclassConfig, TypeError),
-        (MsgspecConfig, TypeError),
-        (PydanticConfig, ValidationError),
-        (PDataclassConfig, ValidationError),
+        (AttrConfigRequired, TypeError),
+        (DataclassConfigRequired, TypeError),
+        (MsgspecConfigRequired, TypeError),
+        (PydanticConfigRequired, ValidationError),
+        (PDataclassConfigRequired, ValidationError),
     ],
 )
 def test_missing_required(config_class, exc_class):
@@ -62,11 +62,11 @@ def test_missing_required(config_class, exc_class):
 @pytest.mark.parametrize(
     "config_class",
     [
-        AttrConfig,
-        DataclassConfig,
-        MsgspecConfig,
-        PydanticConfig,
-        PDataclassConfig,
+        AttrConfigRequired,
+        DataclassConfigRequired,
+        MsgspecConfigRequired,
+        PydanticConfigRequired,
+        PDataclassConfigRequired,
     ],
 )
 def test_has_required_required(config_class):
