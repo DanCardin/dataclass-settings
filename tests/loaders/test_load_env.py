@@ -218,7 +218,7 @@ class AttrsFoo:
     bar: AttrsBar
 
 
-@dataclass
+@attr_dataclass
 class AttrsDelimiter:
     foo: AttrsFoo
 
@@ -272,7 +272,7 @@ class PydanticFooDataclass:
     bar: PydanticBarDataclass
 
 
-@dataclass
+@pydantic_dataclass
 class PydanticDelimiterDataclass:
     foo: PydanticFooDataclass
 

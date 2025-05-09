@@ -210,20 +210,90 @@ def test_nested_object(config_class, config_class_nested):
     )
 
 
-def test_nested_delimiter():
-    class Bar(BaseModel):
-        value: Annotated[int, Secret("value")]
+@attr_dataclass
+class AttrsBar:
+    value: Annotated[int, Secret("value")]
 
-    class Foo(BaseModel):
-        bar: Bar
 
-    class Config(BaseModel):
-        foo: Foo
+@attr_dataclass
+class AttrsFoo:
+    bar: AttrsBar
 
+
+@attr_dataclass
+class AttrsDelimiter:
+    foo: AttrsFoo
+
+
+@dataclass
+class DataclassBar:
+    value: Annotated[int, Secret("value")]
+
+
+@dataclass
+class DataclassFoo:
+    bar: DataclassBar
+
+
+@dataclass
+class DataclassDelimiter:
+    foo: DataclassFoo
+
+
+class MsgspecBar(Struct):
+    value: Annotated[int, Secret("value")]
+
+
+class MsgspecFoo(Struct):
+    bar: MsgspecBar
+
+
+class MsgspecDelimiter(Struct):
+    foo: MsgspecFoo
+
+
+class PydanticBar(BaseModel):
+    value: Annotated[int, Secret("value")]
+
+
+class PydanticFoo(BaseModel):
+    bar: PydanticBar
+
+
+class PydanticDelimiter(BaseModel):
+    foo: PydanticFoo
+
+
+@pydantic_dataclass
+class PydanticBarDataclass:
+    value: Annotated[int, Secret("value")]
+
+
+@pydantic_dataclass
+class PydanticFooDataclass:
+    bar: PydanticBarDataclass
+
+
+@pydantic_dataclass
+class PydanticDelimiterDataclass:
+    foo: PydanticFooDataclass
+
+
+@pytest.mark.parametrize(
+    "config_class, foo, bar",
+    [
+        (AttrsDelimiter, AttrsFoo, AttrsBar),
+        (DataclassDelimiter, DataclassFoo, DataclassBar),
+        (MsgspecDelimiter, MsgspecFoo, MsgspecBar),
+        (PydanticDelimiter, PydanticFoo, PydanticBar),
+        (PydanticDelimiterDataclass, PydanticFooDataclass, PydanticBarDataclass),
+    ],
+)
+def test_nested_delimiter(config_class, foo, bar):
     with env_setup(files={"/run/secrets/foo__bar__value": "15"}):
-        config = load_settings(Config, nested_delimiter="__")
+        config = load_settings(config_class, nested_delimiter="__")
 
-    assert config == Config(foo=Foo(bar=Bar(value=15)))
+    assert config == config_class(foo=foo(bar=bar(value=15)))
 
 
 def test_ignore_non_env_fields():
