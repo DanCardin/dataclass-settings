@@ -343,27 +343,88 @@ def test_ignore_non_env_fields(config_class):
     assert config == config_class(value1=15, value2="foo", value3=["foo"])
 
 
-def test_optional_nested_object():
-    class Foo(BaseModel):
-        value: Annotated[int, Env("VALUE")]
+class Foo(BaseModel):
+    value: Annotated[int, Env("VALUE")]
 
-    class Config(BaseModel):
-        foo: Union[Foo, None] = None
 
+@attr_dataclass
+class AttrsOptionalNested:
+    foo: Union[Foo, None] = None
+
+
+@dataclass
+class DataclassOptionalNested:
+    foo: Union[Foo, None] = None
+
+
+class MsgspecOptionalNested(Struct):
+    foo: Union[Foo, None] = None
+
+
+class PydanticOptionalNested(BaseModel):
+    foo: Union[Foo, None] = None
+
+
+@pydantic_dataclass
+class PydanticOptionalNestedDataclass:
+    foo: Union[Foo, None] = None
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsOptionalNested,
+        DataclassOptionalNested,
+        MsgspecOptionalNested,
+        PydanticOptionalNested,
+        PydanticOptionalNestedDataclass,
+    ],
+)
+def test_optional_nested_object(config_class):
     with env_setup({}):
-        config = load_settings(Config, nested_delimiter="__")
+        config = load_settings(config_class, nested_delimiter="__")
 
-    assert config == Config(foo=None)
+    assert config == config_class(foo=None)
 
 
-def test_arbitrary_annotation_skipped():
-    class Config(BaseModel):
-        foo: Annotated[str, ""] = ""
+@attr_dataclass
+class AttrsAnnotationSkipped:
+    foo: Annotated[str, ""] = ""
 
+
+@dataclass
+class DataclassAnnotationSkipped:
+    foo: Annotated[str, ""] = ""
+
+
+class MsgspecAnnotationSkipped(Struct):
+    foo: Annotated[str, ""] = ""
+
+
+class PydanticAnnotationSkipped(BaseModel):
+    foo: Annotated[str, ""] = ""
+
+
+@pydantic_dataclass
+class PydanticAnnotationSkippedDataclass:
+    foo: Annotated[str, ""] = ""
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrsAnnotationSkipped,
+        DataclassAnnotationSkipped,
+        MsgspecAnnotationSkipped,
+        PydanticAnnotationSkipped,
+        PydanticAnnotationSkippedDataclass,
+    ],
+)
+def test_arbitrary_annotation_skipped(config_class):
     with env_setup({}):
-        config = load_settings(Config)
+        config = load_settings(config_class)
 
-    assert config == Config()
+    assert config == config_class()
 
 
 def test_union_of_supportable_class_types():
