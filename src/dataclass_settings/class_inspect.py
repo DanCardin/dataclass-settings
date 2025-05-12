@@ -56,10 +56,10 @@ class Field:
         if not self.mapper:
             return value
 
-        if isinstance(value, str):
-            return self.mapper(value)
+        if isinstance(value, dict):
+            return self.mapper(**value)
 
-        return self.mapper(**value)
+        return self.mapper(value)
 
 
 @dataclasses.dataclass

@@ -230,3 +230,17 @@ def test_empty_toml(config_class, exc_class, tmp_path: Path):
 
     with env_setup({}), pytest.raises(exc_class):
         load_settings(Config)
+
+
+@skip_under(3, 11, reason="Requires tomllib")
+def test_toml_int(tmp_path: Path):
+    toml_file = tmp_path / "config.toml"
+    toml_file.write_text("[postgres]\nport = 42")
+
+    class Config(Struct):
+        postgres_port: Annotated[int, Toml(toml_file, "postgres.port")]
+        postgres: Annotated[dict[str, int], Toml(toml_file, "postgres")]
+
+    config = load_settings(Config)
+    assert config.postgres_port == 42
+    assert config.postgres == {"port": 42}
