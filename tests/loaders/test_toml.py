@@ -65,15 +65,13 @@ def test_missing_required(config_class, exc_class):
 class AttrRequired:
     foo: Annotated[
         str,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
-        ),
+        Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "project.name"),
     ]
     license: Annotated[
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.license",
+            "project.license",
         ),
     ]
     ignoreme: str = "asdf"
@@ -83,15 +81,13 @@ class AttrRequired:
 class DataclassRequired:
     foo: Annotated[
         str,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
-        ),
+        Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "project.name"),
     ]
     license: Annotated[
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.license",
+            "project.license",
         ),
     ]
     ignoreme: str = "asdf"
@@ -100,15 +96,13 @@ class DataclassRequired:
 class MsgspecRequired(Struct):
     foo: Annotated[
         str,
-        Toml(
-            Path(__file__).parent.parent.parent / "pyproject.toml", "tool.poetry.name"
-        ),
+        Toml(Path(__file__).parent.parent.parent / "pyproject.toml", "project.name"),
     ]
     license: Annotated[
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.license",
+            "project.license",
         ),
     ]
     ignoreme: str = "asdf"
@@ -119,14 +113,14 @@ class PydanticRequired(BaseModel):
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.name",
+            "project.name",
         ),
     ]
     license: Annotated[
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.license",
+            "project.license",
         ),
     ]
     ignoreme: str = "asdf"
@@ -138,14 +132,14 @@ class PDataclassRequired:
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.name",
+            "project.name",
         ),
     ]
     license: Annotated[
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "tool.poetry.license",
+            "project.license",
         ),
     ]
     ignoreme: str = "asdf"
@@ -226,7 +220,7 @@ def test_empty_toml(config_class, exc_class, tmp_path: Path):
     empty_toml.write_text("")
 
     class Config(config_class):
-        tool: Annotated[int, Toml(empty_toml, "tool.poetry.asdf")]
+        tool: Annotated[int, Toml(empty_toml, "project.asdf")]
 
     with env_setup({}), pytest.raises(exc_class):
         load_settings(Config)

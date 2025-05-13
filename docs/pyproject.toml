@@ -1,27 +1,29 @@
-[tool.poetry]
+[project]
 name = "docs"
 version = "0.1.0"
 description = ""
-authors = ["Dan Cardin <ddcardin@gmail.com>"]
+authors = [{ name = "Dan Cardin", email = "ddcardin@gmail.com" }]
 
-[tool.poetry.dependencies]
-python = "^3.10"
+requires-python = ">=3.10"
 
-astroid = "^3"
+dependencies = [
+  "astroid >= 3",
+  "furo >= 2024.04.27",
+  "linkify-it-py",
+  "myst-parser[linkify] >= 4.0.1",
+  "sphinx >= 7.4.0",
+  "sphinx-autoapi >= 3.6.0",
+  "sphinx-autobuild >= 2021.3.14",
+  "sphinx-autodoc-typehints >= 1.18.1",
+  "sphinx-copybutton",
+  "sphinx-pyproject >= 0.3.0",
+]
 
-furo = "^2024.04.27"
-linkify-it-py = "*"
-myst-parser = {version = "^4.0.1", extras = ["linkify"]}
-sphinx = "^7.4.0"
-sphinx-autoapi = "^3.6.0"
-sphinx-autobuild = "^2021.3.14"
-sphinx-autodoc-typehints = "^1.18.1"
-sphinx-copybutton = "*"
-sphinx-pyproject = ">=0.3.0"
-
-[tool.poetry.dev-dependencies]
-sphinx-autobuild = "*"
+[tool.uv]
+dev-dependencies = [
+  "sphinx-autobuild",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
