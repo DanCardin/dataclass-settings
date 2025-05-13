@@ -71,7 +71,7 @@ class AttrRequired:
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "project.license",
+            "project.license.file",
         ),
     ]
     ignoreme: str = "asdf"
@@ -87,7 +87,7 @@ class DataclassRequired:
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "project.license",
+            "project.license.file",
         ),
     ]
     ignoreme: str = "asdf"
@@ -102,7 +102,7 @@ class MsgspecRequired(Struct):
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "project.license",
+            "project.license.file",
         ),
     ]
     ignoreme: str = "asdf"
@@ -120,7 +120,7 @@ class PydanticRequired(BaseModel):
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "project.license",
+            "project.license.file",
         ),
     ]
     ignoreme: str = "asdf"
@@ -139,7 +139,7 @@ class PDataclassRequired:
         str,
         Toml(
             Path(__file__).parent.parent.parent / "pyproject.toml",
-            "project.license",
+            "project.license.file",
         ),
     ]
     ignoreme: str = "asdf"
@@ -159,34 +159,34 @@ class PDataclassRequired:
 def test_has_required_required(config_class):
     config = load_settings(config_class)
     assert config == config_class(
-        foo="dataclass-settings", ignoreme="asdf", license="Apache-2.0"
+        foo="dataclass-settings", ignoreme="asdf", license="LICENSE"
     )
 
 
 @attr_dataclass
-class AttrMissingOptionelInferred:
+class AttrMissingOptionalInferred:
     tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
     ignoreme: str = "asdf"
 
 
 @dataclass
-class DataclassMissingOptionelInferred:
+class DataclassMissingOptionalInferred:
     tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
     ignoreme: str = "asdf"
 
 
-class MsgspecMissingOptionelInferred(Struct):
+class MsgspecMissingOptionalInferred(Struct):
     tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
     ignoreme: str = "asdf"
 
 
-class PydanticMissingOptionelInferred(BaseModel):
+class PydanticMissingOptionalInferred(BaseModel):
     tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
     ignoreme: str = "asdf"
 
 
 @pydantic_dataclass
-class PDataclassMissingOptionelInferred:
+class PDataclassMissingOptionalInferred:
     tool: Annotated[int, Toml(Path(__file__).parent.parent.parent / "pyproject.toml")]
     ignoreme: str = "asdf"
 
@@ -195,11 +195,11 @@ class PDataclassMissingOptionelInferred:
 @pytest.mark.parametrize(
     "config_class",
     [
-        AttrMissingOptionelInferred,
-        DataclassMissingOptionelInferred,
-        MsgspecMissingOptionelInferred,
-        PydanticMissingOptionelInferred,
-        PDataclassMissingOptionelInferred,
+        AttrMissingOptionalInferred,
+        DataclassMissingOptionalInferred,
+        MsgspecMissingOptionalInferred,
+        PydanticMissingOptionalInferred,
+        PDataclassMissingOptionalInferred,
     ],
 )
 def test_missing_optional_inferred_name(config_class):
