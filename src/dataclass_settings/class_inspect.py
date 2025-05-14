@@ -65,9 +65,9 @@ class Field:
 @dataclasses.dataclass
 class DataclassField(Field):
     @classmethod
-    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
-        for f in typ.__dataclass_fields__.values():  # type: ignore
+        for f in value.__dataclass_fields__.values():  # type: ignore
             annotation = get_type(type_hints[f.name])
 
             annotation, args = get_annotation_args(annotation)
@@ -85,10 +85,10 @@ class DataclassField(Field):
 @dataclasses.dataclass
 class AttrsField(Field):
     @classmethod
-    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
 
-        for f in typ.__attrs_attrs__:  # type: ignore
+        for f in value.__attrs_attrs__:  # type: ignore
             annotation = get_type(type_hints[f.name])
             annotation, args = get_annotation_args(annotation)
 
@@ -105,11 +105,11 @@ class AttrsField(Field):
 @dataclasses.dataclass
 class MsgspecField(Field):
     @classmethod
-    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
         import msgspec
 
         fields = []
-        for f in msgspec.structs.fields(typ):
+        for f in msgspec.structs.fields(value):
             annotation = get_type(type_hints[f.name])
             annotation, args = get_annotation_args(annotation)
 
@@ -137,9 +137,9 @@ class MsgspecField(Field):
 @dataclasses.dataclass
 class PydanticV1Field(Field):
     @classmethod
-    def collect(cls, typ, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
-        for name, f in typ.__fields__.items():
+        for name, f in value.__fields__.items():
             annotation = get_type(type_hints[name])
             annotation, args = get_annotation_args(annotation)
 
@@ -158,9 +158,9 @@ class PydanticV1Field(Field):
 @dataclasses.dataclass
 class PydanticV2Field(Field):
     @classmethod
-    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
-        for name, f in typ.model_fields.items():  # type: ignore
+        for name, f in value.model_fields.items():  # type: ignore
             annotation = get_type(type_hints[name])
             mapper = annotation if detect(annotation) else None
 
@@ -177,10 +177,10 @@ class PydanticV2Field(Field):
 @dataclasses.dataclass
 class PydanticV2DataclassField(Field):
     @classmethod
-    def collect(cls, typ: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
         fields = []
 
-        for name, f in typ.__pydantic_fields__.items():  # type: ignore
+        for name, f in value.__pydantic_fields__.items():  # type: ignore
             annotation = get_type(type_hints[name])
             mapper = annotation if detect(annotation) else None
 
@@ -248,10 +248,10 @@ class ClassTypes(Enum):
         return None
 
 
-def get_type(typ):
-    if typing_inspect.is_optional_type(typ):
-        return get_args(typ)[0]
-    return typ
+def get_type(value):
+    if typing_inspect.is_optional_type(value):
+        return get_args(value)[0]
+    return value
 
 
 def get_annotation_args(annotation) -> Tuple[Type, Tuple[Any, ...]]:

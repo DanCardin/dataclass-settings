@@ -1,4 +1,4 @@
-name: Github Release/Publish PyPi
+jame: Github Release/Publish PyPi
 
 on:
   push:
@@ -21,17 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/cappa
+      url: https://pypi.org/p/dataclass-settings
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: 1.2.2
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Build dist
-        run: poetry build
+        run: uvx --from build pyproject-build --installer uv
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

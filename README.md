@@ -64,7 +64,7 @@ example: Example = load_settings(Example, nested_delimiter='_')
 ### Clarity
 
 - `pydantic-settings` makes it really, really difficult to intuit what the
-  concrete environment varibale that's going to be loaded for a given field is
+  concrete environment variable that's going to be loaded for a given field is
   **actually** going to be. Based on my own experience, and from perusing their
   issue tracker, it seems like this is not an uncommon experience.
 
@@ -127,7 +127,7 @@ example: Example = load_settings(Example, nested_delimiter='_')
 
   Practically, `pydantic` has the most robust system for parsing/validating a
   json-like structure into the models, so it's probably to be the most flexible
-  anyways. But for many simple cases, particuarly those without nesting, or that
+  anyways. But for many simple cases, particularly those without nesting, or that
   only deal in simple types (like int, float, str, etc); then dataclasses/attrs
   can certainly provide a similar experience.
 
