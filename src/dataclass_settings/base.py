@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Sequence, TypeVar
+from typing import Any, ClassVar, Sequence, TypeVar
 
 from dataclass_settings import class_inspect
 from dataclass_settings.context import Context
@@ -80,6 +80,9 @@ def collect(
 ) -> dict[str, Any] | None:
     result = {}
     for field in class_inspect.fields(source_cls):
+        if field.type_view.fallback_origin is ClassVar:
+            continue
+
         field_context = context.enter(field.name)
 
         value: str | dict[str, Any] | None = None

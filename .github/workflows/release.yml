@@ -1,4 +1,4 @@
-jame: Github Release/Publish PyPi
+name: Github Release/Publish PyPi
 
 on:
   push:
