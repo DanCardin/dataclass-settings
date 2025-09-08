@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
-from typing import Any, Callable, Tuple, Type
+from typing import Any, Callable, Sequence, Type
 
-import typing_inspect
-from typing_extensions import Annotated, Self, get_args, get_origin, get_type_hints
+from type_lens import TypeView
+from typing_extensions import Self, get_type_hints
 
 from dataclass_settings.loaders import Loader
 
@@ -22,7 +22,7 @@ def detect(cls: type) -> bool:
 @dataclasses.dataclass
 class Field:
     name: str
-    type: type
+    type_view: TypeView
     annotations: tuple[Any, ...]
     mapper: Callable[..., Any] | None = None
 
@@ -32,10 +32,10 @@ class Field:
                 yield m
 
     def get_nested_type(self) -> Type | None:
-        if typing_inspect.is_union_type(self.type):
-            args = typing_inspect.get_args(self.type)
+        if self.type_view.is_union:
+            args: Sequence[type] = self.type_view.args
         else:
-            args = [self.type]
+            args = [self.type_view.annotation]
 
         unsupported_args = []
         try:
@@ -61,23 +61,25 @@ class Field:
 
         return self.mapper(value)
 
+    @classmethod
+    def from_type_view(cls, name: str, type_view: TypeView) -> Self:
+        stripped = type_view.strip_optional()
+        return cls(
+            name=name,
+            type_view=stripped,
+            annotations=type_view.metadata,
+            mapper=stripped.annotation,
+        )
+
 
 @dataclasses.dataclass
 class DataclassField(Field):
     @classmethod
-    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
         for f in value.__dataclass_fields__.values():  # type: ignore
-            annotation = get_type(type_hints[f.name])
-
-            annotation, args = get_annotation_args(annotation)
-
-            field = cls(
-                name=f.name,
-                type=annotation,
-                annotations=args,
-                mapper=annotation,
-            )
+            type_view = type_hints[f.name]
+            field = cls.from_type_view(f.name, type_view)
             fields.append(field)
         return fields
 
@@ -85,19 +87,12 @@ class DataclassField(Field):
 @dataclasses.dataclass
 class AttrsField(Field):
     @classmethod
-    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
 
         for f in value.__attrs_attrs__:  # type: ignore
-            annotation = get_type(type_hints[f.name])
-            annotation, args = get_annotation_args(annotation)
-
-            field = cls(
-                name=f.name,
-                type=annotation,
-                annotations=args,
-                mapper=annotation,
-            )
+            type_view = type_hints[f.name]
+            field = cls.from_type_view(f.name, type_view)
             fields.append(field)
         return fields
 
@@ -105,22 +100,18 @@ class AttrsField(Field):
 @dataclasses.dataclass
 class MsgspecField(Field):
     @classmethod
-    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         import msgspec
 
         fields = []
         for f in msgspec.structs.fields(value):
-            annotation = get_type(type_hints[f.name])
-            annotation, args = get_annotation_args(annotation)
+            type_view = type_hints[f.name]
+            field = cls.from_type_view(f.name, type_view)
 
-            mapper = cls.splat_mapper(annotation) if detect(annotation) else annotation
-
-            field = cls(
-                name=f.name,
-                type=annotation,
-                annotations=args,
-                mapper=mapper,
-            )
+            if detect(field.type_view.annotation):
+                field = dataclasses.replace(
+                    field, mapper=cls.splat_mapper(type_view.annotation)
+                )
             fields.append(field)
         return fields
 
@@ -137,20 +128,14 @@ class MsgspecField(Field):
 @dataclasses.dataclass
 class PydanticV1Field(Field):
     @classmethod
-    def collect(cls, value, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
         for name, f in value.__fields__.items():
-            annotation = get_type(type_hints[name])
-            annotation, args = get_annotation_args(annotation)
+            type_view = type_hints[f.name]
+            field = cls.from_type_view(name, type_view)
 
-            mapper = annotation if detect(annotation) else None
-
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=args,
-                mapper=mapper,
-            )
+            if not detect(field.type_view.annotation):
+                field = dataclasses.replace(field, mapper=None)
             fields.append(field)
         return fields
 
@@ -158,18 +143,14 @@ class PydanticV1Field(Field):
 @dataclasses.dataclass
 class PydanticV2Field(Field):
     @classmethod
-    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
         for name, f in value.model_fields.items():  # type: ignore
-            annotation = get_type(type_hints[name])
-            mapper = annotation if detect(annotation) else None
+            type_view = type_hints[f.name]
+            field = cls.from_type_view(name, type_view)
 
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=tuple(f.metadata),
-                mapper=mapper,
-            )
+            if not detect(field.type_view.annotation):
+                field = dataclasses.replace(field, mapper=None)
             fields.append(field)
         return fields
 
@@ -177,19 +158,15 @@ class PydanticV2Field(Field):
 @dataclasses.dataclass
 class PydanticV2DataclassField(Field):
     @classmethod
-    def collect(cls, value: type, type_hints: dict[str, Type]) -> list[Self]:
+    def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
 
         for name, f in value.__pydantic_fields__.items():  # type: ignore
-            annotation = get_type(type_hints[name])
-            mapper = annotation if detect(annotation) else None
+            type_view = type_hints[name]
+            field = cls.from_type_view(name, type_view)
 
-            field = cls(
-                name=name,
-                type=annotation,
-                annotations=tuple(f.metadata),
-                mapper=mapper,
-            )
+            if not detect(field.type_view.annotation):
+                field = dataclasses.replace(field, mapper=None)
             fields.append(field)
         return fields
 
@@ -202,7 +179,9 @@ def fields(cls: type):
             "Must be one of: dataclass, pydantic, or attrs class."
         )
 
-    type_hints = get_type_hints(cls, include_extras=True)
+    type_hints = {
+        k: TypeView(v) for k, v in get_type_hints(cls, include_extras=True).items()
+    }
     return class_type.value.collect(cls, type_hints)
 
 
@@ -246,19 +225,3 @@ class ClassTypes(Enum):
             return cls.attrs
 
         return None
-
-
-def get_type(value):
-    if typing_inspect.is_optional_type(value):
-        return get_args(value)[0]
-    return value
-
-
-def get_annotation_args(annotation) -> Tuple[Type, Tuple[Any, ...]]:
-    args: Tuple[Any, ...] = ()
-    if get_origin(annotation) is Annotated:
-        args = get_args(annotation)
-        annotation, *_args = args
-        args = tuple(_args)
-
-    return annotation, args

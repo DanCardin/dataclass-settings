@@ -1,6 +1,6 @@
 [project]
 name = "dataclass-settings"
-version = "0.5.3"
+version = "0.6.0"
 description = "Declarative dataclass settings."
 
 urls = { repository = "https://github.com/dancardin/dataclass-settings" }
@@ -14,7 +14,7 @@ requires-python = ">=3.8,<4"
 
 dependencies = [
   "typing-extensions >= 4.7.1",
-  "typing-inspect",
+  "type-lens >= 0.2.5",
 ]
 
 [project.optional-dependencies]
