@@ -146,7 +146,7 @@ class PydanticV2Field(Field):
     def collect(cls, value: type, type_hints: dict[str, TypeView]) -> list[Self]:
         fields = []
         for name, f in value.model_fields.items():  # type: ignore
-            type_view = type_hints[f.name]
+            type_view = type_hints[name]
             field = cls.from_type_view(name, type_view)
 
             if not detect(field.type_view.annotation):

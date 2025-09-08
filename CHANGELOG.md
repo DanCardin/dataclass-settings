@@ -2,6 +2,9 @@
 
 ## 0.6
 
+### 0.6.1
+* fix: Bad field reference for pydantic inspection.
+
 ### 0.6.0
 
 * feat: Adopt type-lens library to better handle 3.12-style annotations which
