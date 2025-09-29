@@ -501,48 +501,6 @@ def test_union_of_supportable_class_types(config_class):
         load_settings(config_class)
 
 
-my_secret = Secret.partial(dir="/foo/bar")
-
-
-@attr_dataclass
-class AttrsPartial:
-    foo: Annotated[str, my_secret("foo")]
-
-
-@dataclass
-class DataclassPartial:
-    foo: Annotated[str, my_secret("foo")]
-
-
-class MsgspecPartial(Struct):
-    foo: Annotated[str, my_secret("foo")]
-
-
-class PydanticPartial(BaseModel):
-    foo: Annotated[str, my_secret("foo")]
-
-
-@pydantic_dataclass
-class PDataclassPartial:
-    foo: Annotated[str, my_secret("foo")]
-
-
-@pytest.mark.parametrize(
-    "config_class",
-    [
-        AttrsPartial,
-        DataclassPartial,
-        MsgspecPartial,
-        PydanticPartial,
-        PDataclassPartial,
-    ],
-)
-def test_partial(config_class):
-    with env_setup(files={"/foo/bar/foo": "one"}):
-        config = load_settings(config_class)
-    assert config == config_class(foo="one")
-
-
 @attr_dataclass
 class AttrsFooInfer:
     nested: Annotated[str, Secret()]
@@ -650,5 +608,97 @@ def test_missing_infer_name_or_env_var(config_class):
 
     assert (
         str(e.value)
-        == "Env instance for `bar` supplies no `env_var` and `infer_names` is enabled"
+        == "Secret instance for `bar` supplies no name and `infer_names` is enabled"
     )
+
+
+def test_common_dir_name_override():
+    my_secret = Secret(dir="/foo/bar")
+
+    class Foo(BaseModel):
+        nested: Annotated[str, my_secret.with_name("meow")]
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, my_secret]
+
+    with env_setup(files={"/foo/bar/bar": "2", "/foo/bar/foo_meow": "nest!"}):
+        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+
+def test_dir_fallback():
+    class Foo(BaseModel):
+        nested: Annotated[str, Secret(dir=("/asdf", "/foo/bar"))]
+
+    my_secret = Secret(dir=("/asdf", "/foo/bar"))
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, my_secret]
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/asdf/bar": "2"}):
+        config = load_settings(Config, nested_delimiter="_", infer_names=True)
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+
+def test_dir_configured_at_loader_inferred_name():
+    class Foo(BaseModel):
+        nested: Annotated[str, Secret()]
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, Secret()] = 3
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/bar/baz/bar": "2"}):
+        config = load_settings(
+            Config,
+            nested_delimiter="_",
+            infer_names=True,
+            extra_loaders=Secret.load_with(dir=("/foo/bar", "/bar/baz")),
+        )
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+    with env_setup(files={"/foo/bar/foo_nested": "nest!", "/bar/baz/bar": "2"}):
+        config = load_settings(
+            Config,
+            nested_delimiter="_",
+            infer_names=True,
+            extra_loaders=Secret.load_with(dir="/foo/bar"),
+        )
+
+    assert config == Config(bar=3, foo=Foo(nested="nest!"))
+
+
+def test_dir_configured_at_loader():
+    class Foo(BaseModel):
+        nested: Annotated[str, Secret("asdf")]
+
+    class Config(BaseModel):
+        foo: Foo
+        bar: Annotated[int, Secret("bart")]
+
+    with env_setup(files={"/foo/bar/asdf": "nest!", "/bar/baz/bart": "2"}):
+        config = load_settings(
+            Config,
+            extra_loaders=Secret.load_with(dir=("/foo/bar", "/bar/baz")),
+        )
+
+    assert config == Config(bar=2, foo=Foo(nested="nest!"))
+
+
+def test_cached_load(capsys):
+    class Config(BaseModel):
+        foo: Annotated[int, Secret("bart")]
+        bar: Annotated[int, Secret("bart")]
+
+    with env_setup(files={"/run/secrets/bart": "1"}):
+        config = load_settings(Config)
+
+    assert config == Config(bar=1, foo=1)
+
+    output_lines = capsys.readouterr().out.strip().split("\n")
+    assert len(output_lines) == 1
