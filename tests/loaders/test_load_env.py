@@ -682,3 +682,74 @@ def test_setting_load_error(caplog, config_class, error_cls):
          - Used `Env` to read 'bar', found 'one'.
         """
     )
+
+
+@attr_dataclass
+class AttrBool:
+    no_default_true: Annotated[bool, Env("NO_DEFAULT_TRUE")]
+    no_default_false: Annotated[bool, Env("NO_DEFAULT_FALSE")]
+    default_false: Annotated[bool, Env("DEFAULT_FALSE")] = False
+    default_true: Annotated[bool, Env("DEFAULT_TRUE")] = True
+
+
+@dataclass
+class DataclassBool:
+    no_default_true: Annotated[bool, Env("NO_DEFAULT_TRUE")]
+    no_default_false: Annotated[bool, Env("NO_DEFAULT_FALSE")]
+    default_false: Annotated[bool, Env("DEFAULT_FALSE")] = False
+    default_true: Annotated[bool, Env("DEFAULT_TRUE")] = True
+
+
+class MsgspecBool(Struct):
+    no_default_true: Annotated[bool, Env("NO_DEFAULT_TRUE")]
+    no_default_false: Annotated[bool, Env("NO_DEFAULT_FALSE")]
+    default_false: Annotated[bool, Env("DEFAULT_FALSE")] = False
+    default_true: Annotated[bool, Env("DEFAULT_TRUE")] = True
+
+
+class PydanticBool(BaseModel):
+    no_default_true: Annotated[bool, Env("NO_DEFAULT_TRUE")]
+    no_default_false: Annotated[bool, Env("NO_DEFAULT_FALSE")]
+    default_false: Annotated[bool, Env("DEFAULT_FALSE")] = False
+    default_true: Annotated[bool, Env("DEFAULT_TRUE")] = True
+
+
+@pydantic_dataclass
+class PDataclassBool:
+    no_default_true: Annotated[bool, Env("NO_DEFAULT_TRUE")]
+    no_default_false: Annotated[bool, Env("NO_DEFAULT_FALSE")]
+    default_false: Annotated[bool, Env("DEFAULT_FALSE")] = False
+    default_true: Annotated[bool, Env("DEFAULT_TRUE")] = True
+
+
+TRUTHY_STRINGS = ["1", "true", "t", "yes", "y", "on"]
+FALSY_STRINGS = ["0", "false", "f", "no", "n", "off"]
+
+
+@pytest.mark.parametrize(
+    "config_class",
+    [
+        AttrBool,
+        DataclassBool,
+        MsgspecBool,
+        PydanticBool,
+        PDataclassBool,
+    ],
+)
+@pytest.mark.parametrize("true_str", TRUTHY_STRINGS)
+@pytest.mark.parametrize("false_str", FALSY_STRINGS)
+def test_bool_loading(config_class, true_str, false_str):
+    with env_setup(
+        {
+            "DEFAULT_FALSE": "true",
+            "DEFAULT_TRUE": "false",
+            "NO_DEFAULT_TRUE": true_str,
+            "NO_DEFAULT_FALSE": false_str,
+        }
+    ):
+        config = load_settings(config_class)
+
+    assert config.default_false
+    assert not config.default_true
+    assert config.no_default_true
+    assert not config.no_default_false
