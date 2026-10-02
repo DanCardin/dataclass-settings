@@ -78,3 +78,29 @@ class Example(BaseModel):
 In this case, if `SubExample` **cannot** be loaded, then it will be omitted,
 and resolved as `None` due to the class-level `None` default.
 ````
+
+## Parsing values
+
+A `Parse` annotation maps the raw value produced by a loader before it is sent
+to the class's constructor. Multiple `Parse` annotations are applied in order.
+
+This is useful when the loaded value (usually a string) is not directly
+convertible to the field type, for example `bool("false")` is `True`.
+
+```python
+from typing import Annotated
+from dataclasses import dataclass
+from dataclass_settings import Env, Parse
+
+TRUTHY = {"1", "true", "t", "yes", "y", "on"}
+
+Bool = Annotated[bool, Parse(lambda v: v.lower() in TRUTHY)]
+
+@dataclass
+class Example:
+    debug: Annotated[Bool, Env('DEBUG')] = False
+```
+
+```{note}
+Exceptions raised by a `Parse` function propagate out of `load_settings`.
+```
