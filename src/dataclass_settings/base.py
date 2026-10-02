@@ -95,6 +95,7 @@ def collect(
                 state = context.get_state(loader)
                 value = loader.load(field_context, state)
                 if value is not None:
+                    value = field.parse_value(value)
                     break
 
         if value is not None:
